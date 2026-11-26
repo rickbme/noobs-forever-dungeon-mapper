@@ -603,6 +603,17 @@ function ns.ShowDungeon(instanceID, floor)
     f:Show()
     ns.SnapOpacity()
     ns.Refresh()
+    -- ask for the floor's tiles again shortly after, in case one hadn't loaded yet
+    view.reapply = (view.reapply or 0) + 1
+    local token, fl = view.reapply, view.floor and d.floors[view.floor]
+    if fl then
+        ns.ReapplyTilesLater(function() return view.reapply == token and f:IsShown() end, function()
+            for i, t in ipairs(f.tiles) do
+                t:SetTexture(nil)
+                t:SetTexture(fl.tiles[i])
+            end
+        end)
+    end
 end
 
 -- Turn to a floor, but only if the map is already showing that dungeon.

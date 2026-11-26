@@ -63,6 +63,9 @@ Go into any dungeon (The Hall of Thanes is best, then Ragefire Chasm or Deadmine
       colours:** open that map and type `/fd probe`. It prints your game language and build and says whether
       all the map tiles were found. Screenshot the chat lines, plus the map itself, and tell us which dungeon and
       floor, and whether you use other map or UI addons.
+- [ ] **First open:** open a dungeon you haven't looked at yet from the world map. The picture should have no shaded
+      block. If one shows at first, does it fill in by itself within a few seconds (the addon now asks for the pictures
+      again after 0.4, 1.5 and 4 seconds)? Screenshot it either way, and run `/fd probe` while it is showing.
 - [ ] For a new dungeon: the map is Santiago Reyes' drawing, with **"Map by Santiago Reyes"** at the bottom
       right and his watermark still visible.
 - [ ] In **The Hall of Thanes**: walking into a new area moves a blue ring on the map ("you are here").

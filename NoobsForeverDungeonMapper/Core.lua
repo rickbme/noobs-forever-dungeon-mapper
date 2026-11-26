@@ -67,6 +67,16 @@ function ns.Norm(name)
     return (name:lower():gsub("[^%w]", ""))
 end
 
+-- A texture the game hasn't finished loading when first asked for can stay blank (a dark block where a map
+-- tile should be) until it is asked for again. So a map re-requests its tiles a few times just after it opens:
+-- `isCurrent()` says whether the same map is still showing, `apply()` sets the tiles again.
+function ns.ReapplyTilesLater(isCurrent, apply)
+    if not (C_Timer and C_Timer.After) then return end
+    for _, delay in ipairs({ 0.4, 1.5, 4 }) do
+        C_Timer.After(delay, function() if isCurrent() then apply() end end)
+    end
+end
+
 -- Returns instanceID, dungeon data when the player is inside a dungeon we know about.
 function ns.CurrentInstance()
     local inInstance = Safe(IsInInstance())

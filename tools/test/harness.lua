@@ -43,7 +43,7 @@ widgetMeta = {
             GetScript = function(s, n) return s.scripts[n] end,
             SetText = function(s, t) s.text = t end,
             GetText = function(s) return s.text end,
-            SetTexture = function(s, t) s.texture = t end,
+            SetTexture = function(s, t) s.texture = t; s.texCalls = (rawget(s, "texCalls") or 0) + 1 end,
             SetEnabled = function(s, v)
                 assert(type(v) == "boolean", "SetEnabled needs a boolean")
                 s.enabled = v
@@ -684,6 +684,37 @@ check(table.concat(printed, "\n"):find("all 12 tiles", 1, true), "the probe says
 C_Texture = nil
 ns.HideMap()
 ns.db.probe = nil
+
+realPrint("Map tiles are requested again after a map opens")
+local timers = {}
+C_Timer = { After = function(delay, fn) timers[#timers + 1] = { delay, fn } end }
+ns.ShowDungeon(48, 1)
+local bfdFrame = NoobsForeverDungeonMapperFrame
+local callsBefore = bfdFrame.tiles[4].texCalls
+check(#timers >= 3, "re-requests are scheduled when a dungeon map opens")
+for _, tm in ipairs(timers) do tm[2]() end
+check(bfdFrame.tiles[4].texCalls >= callsBefore + 6, "each tile is set again (cleared, then set) on every re-request")
+check(bfdFrame.tiles[4].texture == ns.Dungeons[48].floors[1].tiles[4], "and ends up with the right picture")
+timers = {}
+ns.ShowDungeon(48, 1)
+local firstRound = timers
+timers = {}
+ns.ShowDungeon(48, 1)
+local before = bfdFrame.tiles[1].texCalls
+for _, tm in ipairs(firstRound) do tm[2]() end
+check(bfdFrame.tiles[1].texCalls == before, "an older open's re-requests do nothing once the map was opened again")
+ns.HideMap()
+for _, tm in ipairs(timers) do tm[2]() end
+check(true, "re-requests for a closed map do no harm")
+timers = {}
+ns.ShowWorldMap(1415)
+check(#timers >= 3, "the world map schedules re-requests too")
+local wcalls = NoobsForeverDungeonMapperWorld.tiles[1].texCalls
+for _, tm in ipairs(timers) do tm[2]() end
+check(NoobsForeverDungeonMapperWorld.tiles[1].texCalls >= wcalls + 6, "and sets its tiles again")
+ns.HideWorldMap()
+for _, tm in ipairs(timers) do tm[2]() end
+C_Timer = nil
 
 realPrint("Boss pins from OpenMap and the placer")
 local pinned = 0
