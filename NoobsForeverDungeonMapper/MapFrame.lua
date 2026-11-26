@@ -328,6 +328,7 @@ local function Create()
         f:SetPoint(p[1], UIParent, p[2], p[3], p[4])
     end
     ns.ApplyScale()
+    ns.ApplyOpacity()
     f:Hide()
 end
 
@@ -647,6 +648,12 @@ function ns.ToggleMap()
     else
         ns.ShowLastDungeon()
     end
+end
+
+-- How see-through the map windows are (Options). 1 is solid.
+function ns.ApplyOpacity()
+    if f then f:SetAlpha(ns.db.opacity or 1) end
+    if ns.ApplyWorldOpacity then ns.ApplyWorldOpacity() end
 end
 
 function ns.ApplyScale()

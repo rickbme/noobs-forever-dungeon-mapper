@@ -35,11 +35,6 @@ local function SmallButton(parent, text, width)
     return b
 end
 
--- Which instance the player is in, or last looked at: its entrance gets a glow.
-local function HighlightedID()
-    return ns.CurrentInstance() or ns.ViewedInstance()
-end
-
 -- The continent map (Eastern Kingdoms or Kalimdor) the player is on, found by walking up from the zone
 -- the game reports for them. Only works outdoors: inside a dungeon the game gives no map at all.
 local function PlayerContinent()
@@ -158,9 +153,6 @@ end
 local function CreatePin(i)
     local p = CreateFrame("Button", nil, f.canvas)
     p:SetFrameLevel(f.canvas:GetFrameLevel() + 6)
-    p.glow = CircleTexture(p, "BACKGROUND", 42)
-    p.glow:SetPoint("CENTER")
-    p.glow:SetVertexColor(0.3, 0.8, 1, 0.55)
     p.icon = p:CreateTexture(nil, "ARTWORK")
     p.icon:SetAllPoints()
     p.num = p:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
@@ -279,7 +271,6 @@ local function Draw()
     f.subtitle:SetText("World map")
 
     for _, p in ipairs(pins) do p:Hide() end
-    local here = HighlightedID()
     local size = data.uiMapID == WORLD and 22 or 28
     for i, pin in ipairs(data.pins) do
         local p = pins[i] or CreatePin(i)
@@ -287,15 +278,13 @@ local function Draw()
         p:SetSize(size, size)
         p:ClearAllPoints()
         p:SetPoint("CENTER", f.canvas, "TOPLEFT", pin[1] * MAP_W, -pin[2] * MAP_H)
-        local raidOnly, isHere = true, false
+        local raidOnly = true
         for _, inst in ipairs(pin[3]) do
             if not inst[3] then raidOnly = false end
-            if inst[1] == here then isHere = true end
         end
         SetEntranceIcon(p.icon, raidOnly)
         p.raidOnly = raidOnly
         p.num:SetText(#pin[3] > 1 and #pin[3] or "")
-        p.glow:SetShown(isHere)
         p:Show()
     end
 
@@ -364,6 +353,7 @@ function ns.ShowWorldMap(uiMapID)
     current = data
     ns.db.worldMap = data.uiMapID
     f:SetScale(ns.db.scale or 1)
+    f:SetAlpha(ns.db.opacity or 1)
     f:Show()
     Draw()
 end
@@ -400,6 +390,11 @@ end
 function ns.ToggleWorldMap()
     if f and f:IsShown() then return f:Hide() end
     ns.ShowWorldMap()
+end
+
+-- How see-through the world map is (Options).
+function ns.ApplyWorldOpacity()
+    if f then f:SetAlpha(ns.db.opacity or 1) end
 end
 
 function ns.HideWorldMap() if f then f:Hide() end end

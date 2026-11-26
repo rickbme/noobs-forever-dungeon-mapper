@@ -21,6 +21,11 @@ local function Apply(want)
     enlarged = want
 end
 
+-- After the player changes the Live view size: apply it now if the minimap is already enlarged.
+function ns.LiveView_Rescale()
+    if enlarged and Minimap and not InCombatLockdown() then Minimap:SetScale(ns.db.liveScale or 1.8) end
+end
+
 function ns.LiveView_Update()
     if not ns.db then return end
     Apply(ns.db.liveView and ns.CurrentInstance() ~= nil)

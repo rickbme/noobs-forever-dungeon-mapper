@@ -36,6 +36,8 @@ widgetMeta = {
             Hide = function(s) s.shown = false end,
             IsShown = function(s) return s.shown end,
             SetShown = function(s, v) s.shown = not not v end,
+            SetAlpha = function(s, a) s.alpha = a end,
+            GetAlpha = function(s) return rawget(s, "alpha") or 1 end,
             SetScript = function(s, n, fn) s.scripts[n] = fn end,
             GetScript = function(s, n) return s.scripts[n] end,
             SetText = function(s, t) s.text = t end,
@@ -79,6 +81,11 @@ GameTooltip_Hide = noop
 Minimap = NewWidget()
 UISpecialFrames = {}
 tinsert = table.insert
+-- the game's Options > AddOns registration: keep the page so the tests can look at it
+Settings = {
+    RegisterCanvasLayoutCategory = function(panel, name) game.settingsPanel, game.settingsName = panel, name return {} end,
+    RegisterAddOnCategory = function() end,
+}
 SlashCmdList = {}
 INSTANCE_RESET_SUCCESS = "%s has been reset."
 issecretvalue = function(v) return type(v) == "table" and v.secret end
@@ -409,13 +416,50 @@ NoobsForeverDungeonMapper_Binding("toggle")
 check(BINDING_NAME_NOOBSFOREVERDUNGEONMAPPER_TOGGLE ~= nil, "key binding has a name")
 ns.db.scale = 1
 ns.OpenOptions()
-check(optFrame.scaleText:GetText() == "100%", "window size shows as a percentage")
-optFrame.larger.scripts.OnClick()
-check(ns.db.scale == 1.1 and optFrame.scaleText:GetText() == "110%", "+ makes the window bigger")
-for i = 1, 30 do optFrame.larger.scripts.OnClick() end
+local scaleStep = optFrame.parts.steppers.scale
+check(scaleStep.value:GetText() == "100%", "window size shows as a percentage")
+scaleStep.plus.scripts.OnClick()
+check(ns.db.scale == 1.1 and scaleStep.value:GetText() == "110%", "+ makes the window bigger")
+for i = 1, 30 do scaleStep.plus.scripts.OnClick() end
 check(ns.db.scale == 2, "size stops at 200%")
 ns.db.scale = 1
 ns.ApplyScale()
+
+realPrint("Options page in the game's Options > AddOns, opacity and the other options")
+check(game.settingsPanel and game.settingsName == "Noobs Forever Dungeon Mapper", "the addon registers a page in the game's Options")
+local page = game.settingsPanel
+check(page.parts and page.parts.steppers.opacity and page.parts.steppers.scale, "the page has the same options as our window")
+ns.db.opacity = 1
+ns.OptionsRefresh()
+local opStep = page.parts.steppers.opacity
+check(opStep.value:GetText() == "100%", "opacity starts solid")
+opStep.minus.scripts.OnClick()
+check(ns.db.opacity == 0.9 and opStep.value:GetText() == "90%", "the page's - makes the map more see-through")
+check(optFrame.parts.steppers.opacity.value:GetText() == "90%", "our window shows the same value")
+ns.ShowDungeon(48, 1)
+check(NoobsForeverDungeonMapperFrame:GetAlpha() == 0.9, "the dungeon map window is see-through")
+ns.ShowWorldMap(1415)
+check(NoobsForeverDungeonMapperWorld:GetAlpha() == 0.9, "the world map window is see-through")
+for i = 1, 20 do opStep.minus.scripts.OnClick() end
+check(ns.db.opacity == 0.3, "opacity stops at 30%")
+for i = 1, 20 do opStep.plus.scripts.OnClick() end
+check(ns.db.opacity == 1 and NoobsForeverDungeonMapperFrame:GetAlpha() == 1, "and goes back to solid")
+ns.HideWorldMap()
+ns.HideMap()
+local liveStep = optFrame.parts.steppers.liveScale
+liveStep.plus.scripts.OnClick()
+check(ns.db.liveScale == 2, "the Live view size can be changed (1.8 -> 2.0)")
+check(rawget(NoobsForeverDungeonMapperWorld.pins[1], "glow") == nil, "no highlight glow on the world map's entrances")
+ns.db.minimapAngle = 90
+ns.db.minimapButton = false
+ns.MinimapButton_Reset()
+check(ns.db.minimapAngle == 200 and ns.db.minimapButton == true, "the minimap button can be put back")
+ns.db.autoOpen, ns.db.route, ns.db.worldFirst, ns.db.scale, ns.db.opacity, ns.db.placer = false, false, false, 1.5, 0.5, true
+optFrame.parts.resetAll.scripts.OnClick()
+check(ns.db.autoOpen == true and ns.db.route == true and ns.db.worldFirst == true and ns.db.scale == 1
+    and ns.db.opacity == 1 and ns.db.placer == false and ns.db.liveScale == 1.8, "Reset puts every option back to normal")
+check(ns.db.runs ~= nil and ns.db.bossPlaces ~= nil, "Reset keeps kills and placed pins")
+
 ns.db.welcomed = false
 Fire("PLAYER_ENTERING_WORLD")
 check(NoobsForeverDungeonMapperWelcome:IsShown(), "welcome shows when it was never dismissed")

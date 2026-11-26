@@ -35,6 +35,9 @@ Work in progress (beta): it has not been tested in the live game yet.
   this dungeon, with their goals. A quest that names a boss puts a gold **!** on that boss. (The game has no
   data for where quest goals are inside dungeons, so this uses your own quest log; see
   [docs/quests-research.md](docs/quests-research.md).)
+- **Options in the game's menu**: *Esc > Options > AddOns > Noobs Forever Dungeon Mapper* has every option
+  (also from the map's *Options* button): what opens by itself, the boss-order lines, the minimap button, Live
+  view and its size, window size, and **map opacity** to make the maps see-through, plus reset buttons.
 - **No typing needed**: everything has a button. The map window has **Options** and **Dungeons**
   buttons, the minimap button's right-click menu lists every dungeon plus Options, and a short welcome
   popup explains the basics the first time you play. There is also an entry in the game's

@@ -21,7 +21,12 @@ and copy any red error text. That's all we need.
 - [ ] Drag the minimap icon around the minimap. It follows and stays where you drop it.
 - [ ] **Options** (from the window's *Options* button): clicking each box turns it on and off, the *-* and *+*
       buttons change the window size, and Escape closes it.
-- [ ] *Esc > Options > AddOns* has a *Noobs Forever Dungeon Mapper* page with an *Open the options* button.
+- [ ] *Esc > Options > AddOns* has a *Noobs Forever Dungeon Mapper* page with all our options in two columns
+      (the same as the window from the map's *Options* button). Everything fits on the page, and clicking
+      a box there changes it right away.
+- [ ] **Map opacity**: lowering it (the *-* button) makes both the dungeon map window and the world map
+      window see-through, so you can see the game behind them. It stops at 30%.
+- [ ] The world map no longer highlights the dungeon you last clicked.
 - [ ] *Esc > Options > Keybindings > AddOns* lists the show/hide map, world map and options bindings.
 
 ## 2. The world map

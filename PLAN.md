@@ -179,3 +179,11 @@ Feedback from guild testers, and what was done:
 - The continent tabs on the world map are replaced by mouse wheel zoom (wheel up over a continent zooms in on it,
   wheel down zooms out; over the sea it picks the nearest continent) plus a visible *Zoom out* button and a hint line.
   Clicking a continent still works. The cursor-to-map conversion is untested in game (same maths as the pin placer).
+
+## Status 2026-11-25 (options page, opacity)
+
+- The page in the game's Options > AddOns now holds all our options (a canvas page filled by the same
+  `BuildOptions` as our Options window, so the two agree), not just a button. New options: map opacity (both map
+  windows, 30%-100%), Live view size, put the minimap button back, reset all options. Removed the glow that marked
+  the last-viewed dungeon on the world map. Still custom widgets (no Blizzard `Settings.Create*` controls), so the
+  look in the game's panel and whether two columns fit its canvas are unverified.

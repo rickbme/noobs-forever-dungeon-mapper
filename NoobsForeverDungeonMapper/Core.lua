@@ -13,6 +13,7 @@ ns.DEFAULTS = {
     autoClose = true,     -- hide it again when leaving
     followProgress = true, -- after a kill, turn to the floor of the next boss
     scale = 1,
+    opacity = 1,          -- 1 = solid; lower makes the map windows see-through
     liveView = false,     -- enlarge the minimap while inside a dungeon
     liveScale = 1.8,
     minimapButton = true, -- show the minimap button

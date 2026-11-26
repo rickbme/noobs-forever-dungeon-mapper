@@ -94,3 +94,12 @@ function ns.MinimapButton_Toggle()
     ns.MinimapButton_Update()
     ns.Print("Minimap button: " .. (ns.db.minimapButton and "shown" or "hidden (use /fd to open the map)"))
 end
+
+-- Back to the normal spot on the minimap's edge, and shown.
+function ns.MinimapButton_Reset()
+    ns.db.minimapAngle = ns.DEFAULTS.minimapAngle
+    ns.db.minimapButton = true
+    ns.MinimapButton_Update()
+    if button then Place() end
+    if ns.OptionsRefresh then ns.OptionsRefresh() end
+end
