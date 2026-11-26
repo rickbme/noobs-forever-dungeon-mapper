@@ -27,4 +27,5 @@ MapFrame.lua
 LiveView.lua
 MinimapButton.lua
 WorldMap.lua
+Quests.lua
 Options.lua

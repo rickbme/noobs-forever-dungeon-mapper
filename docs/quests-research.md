@@ -41,3 +41,10 @@ objectives), then add option 2's quest-spot placing if the guild wants real posi
 
 Not verified in game: that the quest log rows are grouped under the dungeon's name in Forever, and how objective
 text is worded. The first version should log what it finds (as the probe does) so we can tune the matching.
+
+## Status
+
+Option 1 is built (Quests.lua, the **Quests** button in the dungeon window). First version, untested in game: it
+matches by the quest log's zone heading, by the dungeon's name in a quest's title, and by boss names in a title or
+goal (names of at least 5 letters). With `/fd probe log` on it keeps the quest log it saw in
+`NoobsForeverDungeonMapperDB.questScan`, so the matching can be tuned from real quest logs.

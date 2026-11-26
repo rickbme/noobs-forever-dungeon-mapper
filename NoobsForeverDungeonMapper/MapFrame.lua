@@ -71,6 +71,11 @@ local function CreatePin(i)
     p.num = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     p.num:SetPoint("CENTER", 0, 0)
     p.num:SetTextColor(1, 1, 1)
+    p.quest = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    p.quest:SetPoint("BOTTOM", p, "TOP", 0, -4)
+    p.quest:SetTextColor(1, 0.82, 0)
+    p.quest:SetText("!")
+    p.quest:Hide()
     p.check = p:CreateTexture(nil, "OVERLAY")
     p.check:SetSize(16, 16)
     p.check:SetPoint("CENTER")
@@ -242,6 +247,17 @@ local function Create()
     f.list:SetPoint("TOPLEFT", f.canvas, "TOPRIGHT", PAD, 0)
     f.list:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
     f.list:SetBackdropColor(0, 0, 0, 0.35)
+    f.questPanel = CreateFrame("Frame", nil, f, "BackdropTemplate")
+    f.questPanel:SetSize(LIST_W, MAP_H)
+    f.questPanel:SetPoint("TOPLEFT", f.canvas, "TOPRIGHT", PAD, 0)
+    f.questPanel:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
+    f.questPanel:SetBackdropColor(0, 0, 0, 0.35)
+    f.questText = f.questPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    f.questText:SetPoint("TOPLEFT", 8, -8)
+    f.questText:SetWidth(LIST_W - 16)
+    f.questText:SetJustifyH("LEFT")
+    f.questText:SetJustifyV("TOP")
+    f.questPanel:Hide()
     f.listHint = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     f.listHint:SetPoint("TOPLEFT", f.list, "BOTTOMLEFT", 2, -4)
     f.listHint:SetWidth(LIST_W)
@@ -282,8 +298,21 @@ local function Create()
         GameTooltip:Show()
     end)
     f.world:SetScript("OnLeave", GameTooltip_Hide)
+    f.questsBtn = SmallButton(f, "Quests", 90)
+    f.questsBtn:SetPoint("RIGHT", f.world, "LEFT", -4, 0)
+    f.questsBtn:SetScript("OnClick", function()
+        ns.db.panel = ns.db.panel == "quests" and "bosses" or "quests"
+        ns.Refresh()
+    end)
+    f.questsBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("My quests here")
+        GameTooltip:AddLine("Shows the quests in your quest log that belong to this dungeon, and marks the bosses they name.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    f.questsBtn:SetScript("OnLeave", GameTooltip_Hide)
     f.options = SmallButton(f, "Options", 70)
-    f.options:SetPoint("RIGHT", f.world, "LEFT", -4, 0)
+    f.options:SetPoint("RIGHT", f.questsBtn, "LEFT", -4, 0)
     f.options:SetScript("OnClick", function() ns.ToggleOptions() end)
     f.options:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -319,6 +348,9 @@ function ns.ShowBossTooltip(owner, boss, index)
         GameTooltip:AddLine("Next boss", 1, 0.82, 0)
     end
     local d = ns.Dungeons[id]
+    for _, q in ipairs(view.bossQuests and view.bossQuests[index] or {}) do
+        GameTooltip:AddLine("Quest: " .. q.title, 1, 0.82, 0)
+    end
     if boss.floor and d.floors[boss.floor] then
         GameTooltip:AddLine("Floor: " .. d.floors[boss.floor].name, 1, 1, 1)
     elseif #d.floors > 0 then
@@ -375,6 +407,7 @@ local function DrawPins(d)
             p.num:SetText(killed and "" or i)
             p.num:SetTextColor(b == nextBoss and 0 or 1, b == nextBoss and 0 or 1, b == nextBoss and 0 or 1)
             p.check:SetShown(killed)
+            p.quest:SetShown(view.bossQuests and view.bossQuests[i] ~= nil and not killed)
             p.glow:SetShown(b == nextBoss or fighting == b)
             if b == nextBoss or fighting == b then p.pulse:Play() end
             p:Show()
@@ -394,6 +427,7 @@ local function DrawList(d)
                 or (b == nextBoss and "ffffd100") or "ffffffff"
             local where = ""
             if b.floor and b.floor ~= view.floor and #d.floors > 1 then where = " |cff808080(other floor)|r" end
+            if view.bossQuests and view.bossQuests[i] then where = where .. " |cffffd100!|r" end
             if ns.db.placer and not b.x then where = where .. " |cff40d0ff(no pin yet)|r" end
             if ns.db.placer and placing == i then color = "ff40d0ff" end
             r.text:SetText(("|c%s%d. %s|r%s"):format(color, i, b.name, where))
@@ -436,6 +470,19 @@ function ns.Refresh()
     f.next:SetEnabled(view.floor ~= nil and view.floor < #d.floors)
     f.live:SetText(ns.db.liveView and "Live: on" or "Live view")
 
+    view.quests = ns.QuestsFor(view.instanceID)
+    view.bossQuests = {}
+    for _, q in ipairs(view.quests) do
+        for _, bi in ipairs(q.bosses) do
+            view.bossQuests[bi] = view.bossQuests[bi] or {}
+            table.insert(view.bossQuests[bi], q)
+        end
+    end
+    local showQuests = ns.db.panel == "quests"
+    f.list:SetShown(not showQuests)
+    f.questPanel:SetShown(showQuests)
+    f.questText:SetText(ns.QuestPanelText(view.quests, d))
+    f.questsBtn:SetText(("Quests (%d)"):format(#view.quests))
     DrawRoute(d)
     DrawPins(d)
     DrawList(d)
@@ -461,8 +508,12 @@ function ns.UpdatePlacerUI()
         f.placeStatus:Hide()
         f.placeRemove:Hide()
     end
-    f.listHint:SetText(ns.db.placer and "Mapmaker mode: click a boss, then click the map. Right-click a boss: mark killed."
-        or f.listHintDefault)
+    if ns.db.panel == "quests" then
+        f.listHint:SetText("Quests from your quest log that belong to this dungeon. A ! marks the boss a quest names.")
+    else
+        f.listHint:SetText(ns.db.placer and "Mapmaker mode: click a boss, then click the map. Right-click a boss: mark killed."
+            or f.listHintDefault)
+    end
 end
 
 function ns.StartPlacing(index)

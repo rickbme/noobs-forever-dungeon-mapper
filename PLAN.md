@@ -165,4 +165,11 @@ Feedback from guild testers, and what was done:
 - Researched quest locations: no data source exists for positions inside dungeons (client tables, MoP tables and
   Questie all lack them). The quest log API can list the player's own quests and objectives, so the plan is
   "my quests here" with quest markers on bosses named in objectives (docs/quests-research.md, option 1), then
-  player-placed quest spots if wanted. Nothing built yet.
+  player-placed quest spots if wanted. Built the same day, see below.
+
+## Status 2026-11-25 (my quests here)
+
+- `Quests.lua` + the **Quests** button: the dungeon window can show the player's own quests for the dungeon with
+  their goals, and a gold ! on bosses a quest names (pin and list). Matching is by the quest log's zone heading,
+  the dungeon's name in the title, or boss names in a title or goal. Recorded to `questScan` when `/fd probe log`
+  is on. Untested in game: how Forever files and words dungeon quests is exactly what the matching depends on.

@@ -62,6 +62,12 @@ Go into any dungeon (The Hall of Thanes is best, then Ragefire Chasm or Deadmine
       If a kill doesn't show, note which boss, and send the saved-variables file (see section 4): it
       keeps a log of the boss fights as the game reported them.
 
+- [ ] **Quests:** with a dungeon quest in your log (for example one that says to kill a boss there), open that
+      dungeon's map and press **Quests**. The quest should be listed with its goals, and the boss it names should
+      have a gold **!** on its pin and in the boss list. If a quest you have is missing (or one that doesn't
+      belong is shown), note its exact title and what the quest log files it under. Turn on `/fd probe log`
+      first: the saved-variables file then keeps what your quest log looked like (`questScan`).
+
 ## 4. The position check (very useful, 2 minutes)
 
 Stand inside a dungeon, then type:

@@ -26,6 +26,7 @@ no slash commands are needed (`/fd` still works as a shortcut).
 | Maps built from the game's own minimap pictures (fallback) | Not checked |
 | "You are here" marker by sub-zone (only The Hall of Thanes has anchors) | **Not checked** |
 | `/fd probe` and sub-zone recording | **Not checked: its results are needed** |
+| "My quests here" panel and quest markers on bosses | **Not checked: matching depends on how the quest log files and words quests** |
 | Boss pin placer + "Share my boss pins" | **Not checked, click-to-map conversion untested** |
 | World map (Azeroth, both continents) with entrances; opens on the player's continent with a marker outdoors | **Not checked** |
 

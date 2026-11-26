@@ -19,6 +19,7 @@ ns.DEFAULTS = {
     minimapAngle = 200,   -- its position around the minimap, in degrees
     floors = {},          -- [instanceID] = last floor viewed
     runs = {},            -- [instanceID] = { killed = { [key] = true }, last = time() }
+    panel = "bosses",     -- what the right-hand panel of the dungeon window shows: bosses or quests
     route = true,         -- draw the boss order as lines on the dungeon map
     worldFirst = true,    -- outside a dungeon, the map button opens the world map where you are
     placer = false,       -- mapmaker mode: click a boss, then the map, to place its pin
@@ -330,7 +331,8 @@ frame:SetScript("OnEvent", function(self, event, ...)
         ns.ApplyBossPlaces()
         for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED",
             "ZONE_CHANGED_INDOORS", "ENCOUNTER_START", "ENCOUNTER_END", "BOSS_KILL",
-            "CHAT_MSG_SYSTEM", "PLAYER_REGEN_ENABLED" }) do
+            "CHAT_MSG_SYSTEM", "PLAYER_REGEN_ENABLED", "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_REMOVED",
+            "QUEST_TURNED_IN" }) do
             self:RegisterEvent(e)
         end
     elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
@@ -348,6 +350,8 @@ frame:SetScript("OnEvent", function(self, event, ...)
         OnEncounterEnd(id, name, 1)
     elseif event == "CHAT_MSG_SYSTEM" then
         OnSystemMessage(...)
+    elseif event == "QUEST_LOG_UPDATE" or event == "QUEST_ACCEPTED" or event == "QUEST_REMOVED" or event == "QUEST_TURNED_IN" then
+        ns.QuestsChanged()
     elseif event == "PLAYER_REGEN_ENABLED" then
         ns.LiveView_Update()
     end

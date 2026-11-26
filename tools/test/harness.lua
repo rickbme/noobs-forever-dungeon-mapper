@@ -133,7 +133,7 @@ end
 -- Load the addon like the client does: each file gets (addonName, namespace)
 -------------------------------------------------------------------------------
 local ns = {}
-for _, file in ipairs({ "Data/Dungeons.lua", "Data/DungeonDrawn.lua", "Data/DungeonMinimap.lua", "Data/WorldMaps.lua", "Data/DungeonBosses.lua", "Data/BossPlaces.lua", "Data/Merge.lua", "Data/Anchors.lua", "Core.lua", "Probe.lua", "BossPlacer.lua", "MapFrame.lua", "LiveView.lua", "MinimapButton.lua", "WorldMap.lua", "Options.lua" }) do
+for _, file in ipairs({ "Data/Dungeons.lua", "Data/DungeonDrawn.lua", "Data/DungeonMinimap.lua", "Data/WorldMaps.lua", "Data/DungeonBosses.lua", "Data/BossPlaces.lua", "Data/Merge.lua", "Data/Anchors.lua", "Core.lua", "Probe.lua", "BossPlacer.lua", "MapFrame.lua", "LiveView.lua", "MinimapButton.lua", "WorldMap.lua", "Quests.lua", "Options.lua" }) do
     local chunk = assert(loadfile("NoobsForeverDungeonMapper/" .. file))
     chunk(ADDON, ns)
 end
@@ -466,6 +466,71 @@ shown = 0
 for _, l in ipairs(routeFrame.routeLines) do if l:IsShown() then shown = shown + 1 end end
 check(shown == 0, "the lines go away when the option is off")
 ns.db.route = true
+ns.HideMap()
+
+realPrint("My quests here")
+local realQuestLog = C_QuestLog
+C_QuestLog = nil
+check(#ns.QuestsFor(36) == 0, "no quest log API: no quests, no error")
+local log = {
+    { header = "Westfall" },
+    { title = "The Defias Brotherhood", id = 100, level = 20, obj = { { "Edwin VanCleef slain: 0/1", false } } },
+    { title = "Unrelated Errand", id = 102, level = 5, obj = { { "Gather 5 apples: 2/5", false } } },
+    { header = "The Deadmines" },
+    { title = "Collect Red Silk Bandanas", id = 101, level = 18, obj = { { "Red Silk Bandana: 3/3", true } } },
+    { title = "Hidden Quest About Edwin VanCleef", id = 103, level = 18, hidden = true, obj = {} },
+}
+C_QuestLog = {
+    GetNumQuestLogEntries = function() return #log, #log end,
+    GetInfo = function(i)
+        local e = log[i]
+        return { title = e.title or e.header, questID = e.id, isHeader = e.header ~= nil, level = e.level, isHidden = e.hidden }
+    end,
+    GetQuestObjectives = function(id)
+        for _, e in ipairs(log) do
+            if e.id == id then
+                local out = {}
+                for _, o in ipairs(e.obj or {}) do out[#out + 1] = { text = o[1], finished = o[2] } end
+                return out
+            end
+        end
+    end,
+}
+local quests = ns.QuestsFor(36)
+check(#quests == 2, "two quests belong to the Deadmines (a boss named in a goal, and a filing under its name)")
+check(quests[1].title == "The Defias Brotherhood" and #quests[1].bosses == 1 and ns.Dungeons[36].bosses[quests[1].bosses[1]].name == "Edwin VanCleef",
+    "a quest naming a boss in its goals is linked to that boss")
+check(quests[2].title == "Collect Red Silk Bandanas" and quests[2].matched == "header" and quests[2].complete, "a quest filed under the dungeon's name is found, and is ready")
+check(#ns.QuestsFor(389) == 0, "other dungeons get none of them")
+local text = ns.QuestPanelText(quests, ns.Dungeons[36])
+check(text:find("The Defias Brotherhood", 1, true) and text:find("Edwin VanCleef", 1, true) and text:find("(ready)", 1, true), "the panel text shows titles, goals, the boss and readiness")
+check(ns.QuestPanelText({}, ns.Dungeons[36]):find("None of the quests", 1, true), "the panel says so when there are none")
+
+ns.db.panel = "quests"
+local vanIndex
+for i, b in ipairs(ns.Dungeons[36].bosses) do if b.name == "Edwin VanCleef" then vanIndex = i end end
+ns.ShowDungeon(36, ns.Dungeons[36].bosses[vanIndex].floor or 1)
+local qf = NoobsForeverDungeonMapperFrame
+check(qf.questPanel:IsShown() and not qf.list:IsShown(), "the quests panel replaces the boss list")
+check(qf.questsBtn.text == "Quests (2)", "the button counts the quests")
+check(qf.pins[vanIndex] and qf.pins[vanIndex]:IsShown() and qf.pins[vanIndex].quest:IsShown(), "the boss a quest names gets a quest marker")
+qf.questsBtn.scripts.OnClick()
+check(ns.db.panel == "bosses" and qf.list:IsShown() and not qf.questPanel:IsShown(), "the button switches back to the boss list")
+ns.SetKilled(36, ns.Dungeons[36].bosses[vanIndex], true)
+check(not qf.pins[vanIndex].quest:IsShown(), "the quest marker goes once the boss is down")
+ns.ResetRun(36)
+local redraws = 0
+local refreshBefore = ns.Refresh
+ns.Refresh = function() redraws = redraws + 1 return refreshBefore() end
+Fire("QUEST_LOG_UPDATE")
+check(redraws >= 1, "a quest log change redraws the window")
+ns.Refresh = refreshBefore
+ns.db.probeLog = true
+ns.QuestsFor(36)
+check(ns.db.questScan and #ns.db.questScan.quests == 3, "with recording on, the quest log is kept for tuning")
+ns.db.probeLog = false
+ns.db.questScan = nil
+C_QuestLog = realQuestLog
 ns.HideMap()
 
 realPrint("Boss pins from OpenMap and the placer")

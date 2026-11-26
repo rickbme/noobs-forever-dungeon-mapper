@@ -30,6 +30,10 @@ Work in progress (beta): it has not been tested in the live game yet.
   orange, yellow about right, green easy, grey trivial).
 - **Boss route**: lines join the bosses in order on each floor so you know where to go next (an option turns
   them off). They show the order, not the exact path to walk.
+- **My quests here**: the **Quests** button switches the boss list to the quests in your quest log that belong to
+  this dungeon, with their goals. A quest that names a boss puts a gold **!** on that boss. (The game has no
+  data for where quest goals are inside dungeons, so this uses your own quest log; see
+  [docs/quests-research.md](docs/quests-research.md).)
 - **No typing needed**: everything has a button. The map window has **Options** and **Dungeons**
   buttons, the minimap button's right-click menu lists every dungeon plus Options, and a short welcome
   popup explains the basics the first time you play. There is also an entry in the game's
