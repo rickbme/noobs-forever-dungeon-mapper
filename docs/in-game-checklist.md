@@ -45,6 +45,7 @@ Go into any dungeon (The Hall of Thanes is best, then Ragefire Chasm or Deadmine
 - [ ] Boss numbers on the map match the list. Clicking a boss in the list pulses its pin.
 - [ ] After you kill a boss, it goes grey with a tick and the next boss pulses gold.
 - [ ] If the dungeon has more than one floor, the < and > buttons change floor.
+      Only the bosses of the floor you are looking at have red markers; the old floor's markers disappear.
 - [ ] For a new dungeon: the map is Santiago Reyes' drawing, with **"Map by Santiago Reyes"** at the bottom
       right and his watermark still visible.
 - [ ] In **The Hall of Thanes**: walking into a new area moves a blue ring on the map ("you are here").

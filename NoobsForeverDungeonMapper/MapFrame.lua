@@ -158,6 +158,7 @@ local function Create()
     f.canvas:SetPoint("TOPLEFT", PAD, -PAD - 30)
     f.canvas:SetClipsChildren(true)
     f.routeLines = routeLines -- (the offline tests look at them)
+    f.pins = pins
     f.canvas:SetScript("OnMouseUp", function(self, button)
         if not placing then return end
         if button == "RightButton" then return ns.CancelPlacing() end
@@ -355,7 +356,9 @@ local function DrawRoute(d)
 end
 
 local function DrawPins(d)
-    for _, p in ipairs(pins) do p:Hide(); p.pulse:Stop() end
+    -- pins are indexed by boss number, with gaps for bosses on other floors: ipairs would stop at the
+    -- first gap and leave the later pins on screen, so walk them all with pairs
+    for _, p in pairs(pins) do p:Hide(); p.pulse:Stop() end
     if not d.floors[view.floor] then return end
     local nextBoss = ns.NextBoss(view.instanceID)
     for i, b in ipairs(d.bosses) do

@@ -416,6 +416,24 @@ check(ns.DifficultyColor(55, 60) == "|cffff1a1a", "a dungeon far above you is re
 check(ns.DifficultyColor(5, 9) == "|cff808080", "a dungeon far below you is grey")
 check(ns.LevelsColored(17, 26) == "|cffffff0017-26|r" and ns.LevelsColored(60, 60):find("60|r", 1, true), "levels are coloured text")
 
+realPrint("Switching floors clears the old floor's markers")
+local stale = 0
+for id, d in pairs(ns.Dungeons) do
+    if #d.floors > 1 then
+        local order = {}
+        for fl = 1, #d.floors do order[#order + 1] = fl end
+        for fl = #d.floors - 1, 1, -1 do order[#order + 1] = fl end
+        for _, fl in ipairs(order) do
+            ns.ShowDungeon(id, fl)
+            for _, p in pairs(NoobsForeverDungeonMapperFrame.pins) do
+                if p:IsShown() and p.boss.floor ~= fl then stale = stale + 1 end
+            end
+        end
+    end
+end
+check(stale == 0, "no boss pin from another floor stays on screen (" .. stale .. " stale)")
+ns.HideMap()
+
 realPrint("The boss order is drawn as lines")
 ns.db.route = true
 ns.ShowDungeon(48, 1)

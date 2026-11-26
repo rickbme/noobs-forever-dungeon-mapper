@@ -145,3 +145,10 @@ Feedback from guild testers, and what was done:
 | Path/route through a dungeon | **v1 done**: lines join the bosses in order on each floor (option). They are straight lines (order, not walking path); a real path needs hand-placed waypoints, which the placer could be extended to collect. "Next boss" now says which floor it is on. |
 | Bug: parts of the map greyed out when viewing outside the dungeon | **Not reproduced.** No desaturation or dimming exists in the code outside a dungeon. Needs a screenshot, the dungeon's name and the game language. Candidates: killed bosses shown grey from an old run, the "viewing only" text, or missing tiles on non-English clients (see the green-squares note). |
 | Quest locations inside dungeons | **Research needed.** Questie has no in-dungeon positions. Possible source: the game's `QuestPOIBlob`/`QuestPOIPoint` tables (positions on UiMaps, which the dungeon floors already use) plus quest names, and the quest log API for state. Not started. |
+
+## Status 2026-11-25 (floor switching)
+
+- Bug fixed: boss pins from another floor stayed on screen after switching floors. Pins are indexed by boss
+  number with gaps, and the hide loop used `ipairs`, which stops at the first gap. Now `pairs`. The harness
+  switches through every floor of every multi-floor dungeon and fails if any pin from another floor is shown
+  (it found 39 before the fix).
