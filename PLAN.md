@@ -187,3 +187,10 @@ Feedback from guild testers, and what was done:
   windows, 30%-100%), Live view size, put the minimap button back, reset all options. Removed the glow that marked
   the last-viewed dungeon on the world map. Still custom widgets (no Blizzard `Settings.Create*` controls), so the
   look in the game's panel and whether two columns fit its canvas are unverified.
+
+## Status 2026-11-25 (fade while moving)
+
+- `Fade.lua`: while the player moves (`IsPlayerMoving`, or `GetUnitSpeed` above zero for rides) the dungeon and world map
+  windows fade to `moveOpacity` (default 35%, never above the normal opacity) in about a quarter of a second, and
+  back when they stop; a window the mouse is over stays solid. On by default (`moveFade`), options for both. Unverified
+  in the game: that `IsPlayerMoving` / `GetUnitSpeed` answer for the player on Forever and aren't secret values.

@@ -24,6 +24,9 @@ local SETTINGS = {
     { label = "Outside dungeons, open the world map where I am",
       tip = "The map button then shows the world map. Click a dungeon icon on it to open that dungeon's map. Turn off to get the last dungeon's map instead.",
       get = DB("worldFirst", true), set = function(v) ns.db.worldFirst = v end },
+    { label = "See the game through the maps while I move",
+      tip = "The maps fade to see-through while you walk, so you can see where you are going, and come back when you stop. A map you point at with the mouse stays solid.",
+      get = DB("moveFade", true), set = function(v) ns.db.moveFade = v; ns.SnapOpacity() end },
     { label = "Show the boss order as lines on the map",
       tip = "Lines join the bosses in the order the game lists them, to help you find your way. They show the order, not the exact path to walk.",
       get = DB("route", true), set = function(v) ns.db.route = v; ns.Refresh() end },
@@ -158,7 +161,11 @@ local STEPPERS = {
     { key = "opacity", label = "Map opacity (lower = see-through)", step = 0.1, min = 0.3, max = 1, fmt = Percent,
       tip = "Lower numbers make the map windows see-through, so you can see the game behind them.",
       get = function() return ns.db.opacity or 1 end,
-      set = function(v) ns.db.opacity = v; ns.ApplyOpacity() end },
+      set = function(v) ns.db.opacity = v; ns.SnapOpacity() end },
+    { key = "moveOpacity", label = "Opacity while I move", step = 0.05, min = 0.1, max = 1, fmt = Percent,
+      tip = "How see-through the maps get while you walk, so you can see where you are going. Needs the option on the left to be on.",
+      get = function() return ns.db.moveOpacity or 0.35 end,
+      set = function(v) ns.db.moveOpacity = v; ns.SnapOpacity() end },
     { key = "liveScale", label = "Live view minimap size", step = 0.2, min = 1.2, max = 2.6, fmt = Percent,
       tip = "How much bigger Live view makes your minimap inside a dungeon.",
       get = function() return ns.db.liveScale or 1.8 end,
@@ -167,7 +174,7 @@ local STEPPERS = {
 
 -- The settings that are plain on/off or numbers (not the run data, floors or placed pins).
 local OPTION_KEYS = { "autoOpen", "autoClose", "followProgress", "scale", "opacity", "liveView", "liveScale",
-    "minimapButton", "worldFirst", "route", "placer", "probeLog", "panel" }
+    "minimapButton", "worldFirst", "route", "placer", "probeLog", "panel", "moveFade", "moveOpacity" }
 
 local function ResetOptions()
     for _, k in ipairs(OPTION_KEYS) do
@@ -175,7 +182,7 @@ local function ResetOptions()
         ns.db[k] = type(v) == "table" and {} or v
     end
     ns.ApplyScale()
-    ns.ApplyOpacity()
+    ns.SnapOpacity()
     ns.MinimapButton_Update()
     ns.LiveView_Update()
     ns.CancelPlacing()

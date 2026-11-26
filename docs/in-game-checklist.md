@@ -27,6 +27,10 @@ and copy any red error text. That's all we need.
 - [ ] **Map opacity**: lowering it (the *-* button) makes both the dungeon map window and the world map
       window see-through, so you can see the game behind them. It stops at 30%.
 - [ ] The world map no longer highlights the dungeon you last clicked.
+- [ ] **Fade while moving** (on by default): with a map open, walk. The map fades to see-through within about
+      a quarter of a second so you can see where you are going, and returns when you stop. Point the mouse at
+      the map while walking: it stays solid. Does the 35% level feel right? (*Opacity while I move* changes it.)
+      Check that it also fades when you ride a mount or a flight path, and does *not* fade when you stand still.
 - [ ] *Esc > Options > Keybindings > AddOns* lists the show/hide map, world map and options bindings.
 
 ## 2. The world map

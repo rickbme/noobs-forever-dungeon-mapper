@@ -35,6 +35,9 @@ Work in progress (beta): it has not been tested in the live game yet.
   this dungeon, with their goals. A quest that names a boss puts a gold **!** on that boss. (The game has no
   data for where quest goals are inside dungeons, so this uses your own quest log; see
   [docs/quests-research.md](docs/quests-research.md).)
+- **See where you're going**: while you walk, the maps fade to see-through (35% by default) so you can see
+  the game behind them, and come back when you stop. A map your mouse is over stays solid so you can still
+  read and click it. Both are options (*See the game through the maps while I move* and *Opacity while I move*).
 - **Options in the game's menu**: *Esc > Options > AddOns > Noobs Forever Dungeon Mapper* has every option
   (also from the map's *Options* button): what opens by itself, the boss-order lines, the minimap button, Live
   view and its size, window size, and **map opacity** to make the maps see-through, plus reset buttons.

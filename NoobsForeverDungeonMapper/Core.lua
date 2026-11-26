@@ -13,6 +13,8 @@ ns.DEFAULTS = {
     autoClose = true,     -- hide it again when leaving
     followProgress = true, -- after a kill, turn to the floor of the next boss
     scale = 1,
+    moveFade = true,      -- the maps fade to see-through while the player moves
+    moveOpacity = 0.35,   -- how see-through they get while moving
     opacity = 1,          -- 1 = solid; lower makes the map windows see-through
     liveView = false,     -- enlarge the minimap while inside a dungeon
     liveScale = 1.8,

@@ -37,6 +37,7 @@ widgetMeta = {
             IsShown = function(s) return s.shown end,
             SetShown = function(s, v) s.shown = not not v end,
             SetAlpha = function(s, a) s.alpha = a end,
+            IsMouseOver = function(s) return rawget(s, "hovered") or false end,
             GetAlpha = function(s) return rawget(s, "alpha") or 1 end,
             SetScript = function(s, n, fn) s.scripts[n] = fn end,
             GetScript = function(s, n) return s.scripts[n] end,
@@ -111,7 +112,8 @@ function GetZoneText() return game.instanceName or "Azeroth" end
 function GetRealZoneText() return game.instanceName or "Azeroth" end
 function GetMinimapZoneText() return game.subzone end
 function IsIndoors() return true end
-function GetUnitSpeed() return 0, 7, 7, 4.7 end
+function GetUnitSpeed() return game.speed or 0, 7, 7, 4.7 end
+function IsPlayerMoving() return game.moving end
 function UnitPosition() return nil end
 function GetPlayerFacing() return nil end
 -- a tiny map tree: Elwynn Forest (1429) is in the Eastern Kingdoms (1415), Durotar (1411) in Kalimdor (1414)
@@ -140,7 +142,7 @@ end
 -- Load the addon like the client does: each file gets (addonName, namespace)
 -------------------------------------------------------------------------------
 local ns = {}
-for _, file in ipairs({ "Data/Dungeons.lua", "Data/DungeonDrawn.lua", "Data/DungeonMinimap.lua", "Data/WorldMaps.lua", "Data/DungeonBosses.lua", "Data/BossPlaces.lua", "Data/Merge.lua", "Data/Anchors.lua", "Core.lua", "Probe.lua", "BossPlacer.lua", "MapFrame.lua", "LiveView.lua", "MinimapButton.lua", "WorldMap.lua", "Quests.lua", "Options.lua" }) do
+for _, file in ipairs({ "Data/Dungeons.lua", "Data/DungeonDrawn.lua", "Data/DungeonMinimap.lua", "Data/WorldMaps.lua", "Data/DungeonBosses.lua", "Data/BossPlaces.lua", "Data/Merge.lua", "Data/Anchors.lua", "Core.lua", "Probe.lua", "BossPlacer.lua", "MapFrame.lua", "LiveView.lua", "MinimapButton.lua", "WorldMap.lua", "Quests.lua", "Fade.lua", "Options.lua" }) do
     local chunk = assert(loadfile("NoobsForeverDungeonMapper/" .. file))
     chunk(ADDON, ns)
 end
@@ -601,6 +603,68 @@ check(ns.db.questScan and #ns.db.questScan.quests == 3, "with recording on, the 
 ns.db.probeLog = false
 ns.db.questScan = nil
 C_QuestLog = realQuestLog
+ns.HideMap()
+
+realPrint("The maps fade while the player moves")
+local function Near(a, b) return math.abs(a - b) < 0.001 end
+local function Settle() for i = 1, 20 do ns.StepFade(0.1) end end
+ns.db.opacity, ns.db.moveFade, ns.db.moveOpacity = 1, true, 0.35
+ns.ShowDungeon(48, 1)
+ns.ShowWorldMap(1415)
+local fdungeon, fworld = NoobsForeverDungeonMapperFrame, NoobsForeverDungeonMapperWorld
+check(ns.DEFAULTS.moveFade == true and ns.DEFAULTS.moveOpacity == 0.35, "the default is on, at 35%")
+Settle()
+check(Near(fdungeon:GetAlpha(), 1) and Near(fworld:GetAlpha(), 1), "standing still: solid")
+game.moving = true
+ns.StepFade(0.1)
+check(fdungeon:GetAlpha() < 1 and fdungeon:GetAlpha() > 0.35, "when moving the maps start to fade (not a sudden jump)")
+Settle()
+check(Near(fdungeon:GetAlpha(), 0.35) and Near(fworld:GetAlpha(), 0.35), "both maps end up see-through while moving")
+game.moving = false
+Settle()
+check(Near(fdungeon:GetAlpha(), 1) and Near(fworld:GetAlpha(), 1), "and come back when the player stops")
+game.moving = true
+Settle()
+fworld.hovered = true
+Settle()
+check(Near(fworld:GetAlpha(), 1), "a map the mouse is over stays solid while moving")
+fworld.hovered = false
+Settle()
+check(Near(fworld:GetAlpha(), 0.35), "and fades again when the mouse leaves")
+ns.db.moveFade = false
+Settle()
+check(Near(fdungeon:GetAlpha(), 1), "with the option off nothing fades")
+ns.db.moveFade = true
+ns.db.opacity = 0.8
+Settle()
+check(Near(fdungeon:GetAlpha(), 0.35), "moving fades to the moving opacity")
+game.moving = false
+Settle()
+check(Near(fdungeon:GetAlpha(), 0.8), "and stopping returns to the normal opacity, not to solid")
+ns.db.opacity, ns.db.moveOpacity = 0.3, 0.5
+game.moving = true
+Settle()
+check(Near(fdungeon:GetAlpha(), 0.3), "it never gets more solid than the normal opacity while moving")
+ns.db.opacity, ns.db.moveOpacity = 1, 0.35
+local moveStep = NoobsForeverDungeonMapperOptions and NoobsForeverDungeonMapperOptions.parts.steppers.moveOpacity
+check(moveStep ~= nil, "the options have an Opacity while I move setting")
+moveStep.minus.scripts.OnClick()
+check(Near(ns.db.moveOpacity, 0.3), "its - lowers it in 5% steps")
+ns.db.moveOpacity = 0.35
+game.moving = false
+game.speed = 5
+Settle()
+check(Near(fdungeon:GetAlpha(), 0.35), "being carried (speed above zero) counts as moving")
+game.speed = nil
+local realMoving = IsPlayerMoving
+IsPlayerMoving, GetUnitSpeed = nil, nil
+Settle()
+check(Near(fdungeon:GetAlpha(), 1), "no movement API: no fading and no error")
+IsPlayerMoving = realMoving
+function GetUnitSpeed() return game.speed or 0, 7, 7, 4.7 end
+game.moving = false
+Settle()
+ns.HideWorldMap()
 ns.HideMap()
 
 realPrint("Boss pins from OpenMap and the placer")

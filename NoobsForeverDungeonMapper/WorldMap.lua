@@ -353,8 +353,8 @@ function ns.ShowWorldMap(uiMapID)
     current = data
     ns.db.worldMap = data.uiMapID
     f:SetScale(ns.db.scale or 1)
-    f:SetAlpha(ns.db.opacity or 1)
     f:Show()
+    ns.SnapOpacity()
     Draw()
 end
 
@@ -394,7 +394,7 @@ end
 
 -- How see-through the world map is (Options).
 function ns.ApplyWorldOpacity()
-    if f then f:SetAlpha(ns.db.opacity or 1) end
+    if f then f:SetAlpha(ns.CurrentMapAlpha()) end
 end
 
 function ns.HideWorldMap() if f then f:Hide() end end
