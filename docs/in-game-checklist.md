@@ -112,12 +112,17 @@ select screen (this saves the file):
 
 ## 5. Placing boss pins (helps everyone)
 
-Many bosses have no pin yet. In Options, tick *Help map the bosses*.
+Many bosses have no pin yet. In Options, tick *Help map the bosses*. A dark bar appears across the top of the
+map with **Undo**, **Remove pin** and **Done** buttons.
 
 - [ ] Open a dungeon's map. Bosses without a pin say "(no pin yet)" in the list.
-- [ ] Click a boss in the list, then click the spot on the map where it is. A pin appears at the spot you
-      clicked (**check it really is where you clicked**).
-- [ ] Right-click the map to cancel. *Remove my pin* undoes a pin.
+- [ ] Click a boss in the list (or click one of your pins), then click the spot on the map where it is. A pin
+      appears at the spot you clicked (**check it really is where you clicked**). Your own pins have a blue ring.
+- [ ] **Move a pin:** drag it to a new spot, or pick the boss again and click the map.
+- [ ] **Made a mistake?** *Undo* takes back the last change (place, move or remove) and can be pressed several times.
+      *Remove pin* (with the boss picked) or a **right-click on your own pin** removes it. Right-click the map
+      cancels picking a boss. While placing pins, clicking never marks a boss as killed.
+- [ ] *Done* ends mapmaker mode (so right-click marks kills again).
 - [ ] In Options, *Share my boss pins* shows your pins as text. Click inside it, press Ctrl+A, then Ctrl+C,
       and paste it to us (for example in the Noobs Forever Discord).
 

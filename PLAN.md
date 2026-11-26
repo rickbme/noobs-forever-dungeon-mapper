@@ -232,3 +232,11 @@ Feedback from guild testers, and what was done:
   texcoords 0.75-1, 0.25-0.5) tinted by state (red, gold next, grey killed) on a soft dark disc, with the boss number in the
   corner and a tick when defeated. Unverified in game: legibility on the parchment and that the icon sheet path is the same
   in the Forever client.
+
+## Status 2026-11-25 (mapmaker mode: undo and editing)
+
+- Problem: a wrong boss pin couldn't be undone, and in mapmaker mode a right-click ticked the boss as killed. Now: a
+  toolbar (Undo, Remove pin, Done) shows over the map in mapmaker mode; Undo has a history of 40 changes (place, move,
+  remove); pins can be dragged to move; right-click on your own pin removes it; kills can't be toggled while mapping
+  (normal mode is unchanged). Your own pins have a blue ring and "Placed by you" in the tooltip. Untested in game: the
+  drag (cursor maths is the same as placing).

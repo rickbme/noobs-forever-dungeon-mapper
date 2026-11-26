@@ -55,6 +55,8 @@ widgetMeta = {
             GetFrameLevel = function() return 1 end,
             GetWidth = function() return 140 end,
             GetCenter = function() return 100, 100 end,
+            GetLeft = function(s) return rawget(s, "left") end,
+            GetTop = function(s) return rawget(s, "top") end,
             GetEffectiveScale = function() return 1 end,
             CreateTexture = function(_, _, layer, _, sub) local w = NewWidget(); w.layer, w.subLevel = layer, sub return w end,
             CreateLine = function(_, _, layer, _, sub) local w = NewWidget(); w.layer, w.subLevel = layer, sub return w end,
@@ -289,6 +291,65 @@ ns.ShowWorldMap(1415)
 check(iconPin.icon.atlas == "Dungeon", "the game's own Dungeon icon is used when this client has it")
 C_Texture = nil
 ns.HideWorldMap()
+
+realPrint("Mapmaker mode: undo, move, remove, and no accidental kills")
+local mf = NoobsForeverDungeonMapperFrame
+ns.db.placer = true
+ns.ShowDungeon(389, 1)
+local boss1 = ns.Dungeons[389].bosses[1]
+ns.ResetRun(389)
+while ns.CanUndoBossPlace() do ns.UndoBossPlace() end
+check(mf.mapper:IsShown(), "the mapmaker toolbar shows in mapmaker mode")
+check(mf.placeUndo.enabled == false, "Undo is greyed out with nothing to undo")
+ns.StartPlacing(1)
+ns.PlaceAt(0.25, 0.40)
+check(boss1.x == 0.25 and mf.placeUndo.enabled == true, "placing a pin makes Undo available")
+ns.StartPlacing(1)
+ns.PlaceAt(0.60, 0.70)
+check(boss1.x == 0.6 and boss1.y == 0.7, "placing again moves the pin")
+check(ns.UndoBossPlace() == boss1 and boss1.x == 0.25 and boss1.y == 0.4, "Undo puts the pin back where it was")
+check(ns.UndoBossPlace() == boss1 and boss1.x == nil and not ns.HasBossPlace(389, boss1), "Undo again takes the new pin away")
+check(ns.UndoBossPlace() == nil, "nothing left to undo")
+-- remove, then undo the removal
+ns.StartPlacing(1)
+ns.PlaceAt(0.30, 0.30)
+ns.StartPlacing(1)
+mf.placeRemove.scripts.OnClick()
+check(boss1.x == nil and not ns.HasBossPlace(389, boss1), "Remove pin takes the player's pin away")
+mf.placeUndo.scripts.OnClick()
+check(boss1.x == 0.3 and ns.HasBossPlace(389, boss1), "and Undo brings it back")
+-- drag to move
+rawset(mf.canvas, "left", 100); rawset(mf.canvas, "top", 700)
+local pin1
+for _, p in pairs(mf.pins) do if p.boss == boss1 then pin1 = p end end
+check(pin1 and pin1:IsShown(), "the placed pin is on the map")
+pin1.scripts.OnDragStart(pin1)
+cursor[1], cursor[2] = 250, 600
+pin1.scripts.OnDragStop(pin1)
+check(math.abs(boss1.x - 0.25) < 0.001 and math.abs(boss1.y - 0.25) < 0.001, "dragging a pin moves it to where it was dropped")
+cursor[1], cursor[2] = 0, 0
+ns.UndoBossPlace()
+check(boss1.x == 0.3 and boss1.y == 0.3, "and a drag can be undone")
+-- clicks: no kill ticks while placing pins
+ns.db.placer = true
+pin1.scripts.OnClick(pin1, "RightButton")
+check(not ns.HasBossPlace(389, boss1) and boss1.x == nil, "right-clicking your own pin in mapmaker mode removes it")
+check(not ns.IsKilled(389, boss1), "and does not mark the boss killed")
+pin1.scripts.OnClick(pin1, "RightButton")
+check(not ns.IsKilled(389, boss1), "right-clicking a pin that isn't yours does nothing")
+local row1
+ns.ShowDungeon(389, 1)
+ns.db.placer = false
+ns.Refresh()
+check(not mf.mapper:IsShown(), "the toolbar goes away when mapmaker mode is off")
+ns.db.placer = true
+ns.Refresh()
+mf.placeDone.scripts.OnClick()
+check(ns.db.placer == false and not mf.mapper:IsShown(), "Done ends mapmaker mode")
+ns.ResetRun(389)
+while ns.CanUndoBossPlace() do ns.UndoBossPlace() end
+ns.db.bossPlaces = {}
+ns.HideMap()
 
 realPrint("The mouse wheel zooms the world map")
 ns.ShowWorldMap(947)
@@ -742,7 +803,7 @@ local rfc = ns.Dungeons[389]
 local oggle = rfc.bosses[1]
 check(oggle.x == nil, "Ragefire Chasm's first boss starts without a pin")
 ns.StartPlacing(1)
-check(NoobsForeverDungeonMapperFrame.placeStatus:IsShown(), "placing shows instructions")
+check(NoobsForeverDungeonMapperFrame.mapper:IsShown() and NoobsForeverDungeonMapperFrame.placeStatus:GetText():find("Placing", 1, true), "placing shows the toolbar and instructions")
 ns.PlaceAt(1.5, 0.2)
 check(oggle.x == nil, "a click outside the map is ignored")
 ns.PlaceAt(0.25, 0.4)

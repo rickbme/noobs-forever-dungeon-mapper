@@ -12,7 +12,18 @@ local function Remember(boss)
     if not boss.original then boss.original = { floor = boss.floor, x = boss.x, y = boss.y } end
 end
 
-function ns.SetBossPlace(instanceID, boss, floor, x, y)
+-- What to put back to undo a change, newest last.
+local history = {}
+local MAX_HISTORY = 40
+
+local function Push(instanceID, boss)
+    local t = ns.db.bossPlaces[instanceID]
+    local prev = t and t[boss.name]
+    history[#history + 1] = { id = instanceID, boss = boss, prev = prev and { prev[1], prev[2], prev[3] } or nil }
+    while #history > MAX_HISTORY do table.remove(history, 1) end
+end
+
+local function Apply(instanceID, boss, floor, x, y)
     Remember(boss)
     x, y = Round(x), Round(y)
     ns.db.bossPlaces[instanceID] = ns.db.bossPlaces[instanceID] or {}
@@ -20,18 +31,40 @@ function ns.SetBossPlace(instanceID, boss, floor, x, y)
     boss.floor, boss.x, boss.y = floor, x, y
 end
 
-function ns.HasBossPlace(instanceID, boss)
-    local t = ns.db.bossPlaces[instanceID]
-    return t ~= nil and t[boss.name] ~= nil
-end
-
-function ns.ClearBossPlace(instanceID, boss)
+local function Remove(instanceID, boss)
     local t = ns.db.bossPlaces[instanceID]
     if t then t[boss.name] = nil end
     if boss.original then
         boss.floor, boss.x, boss.y = boss.original.floor, boss.original.x, boss.original.y
         boss.original = nil
     end
+end
+
+function ns.SetBossPlace(instanceID, boss, floor, x, y)
+    Push(instanceID, boss)
+    Apply(instanceID, boss, floor, x, y)
+end
+
+function ns.HasBossPlace(instanceID, boss)
+    local t = ns.db.bossPlaces[instanceID]
+    return t ~= nil and t[boss.name] ~= nil
+end
+
+-- Removes the player's own pin for a boss (the built-in one, if there is one, comes back).
+function ns.ClearBossPlace(instanceID, boss)
+    if not ns.HasBossPlace(instanceID, boss) then return end
+    Push(instanceID, boss)
+    Remove(instanceID, boss)
+end
+
+function ns.CanUndoBossPlace() return #history > 0 end
+
+-- Takes back the last change (a pin placed, moved or removed). Returns the boss it was for, or nil.
+function ns.UndoBossPlace()
+    local h = table.remove(history)
+    if not h then return nil end
+    if h.prev then Apply(h.id, h.boss, h.prev[1], h.prev[2], h.prev[3]) else Remove(h.id, h.boss) end
+    return h.boss
 end
 
 -- At login: put the player's own placed pins back on the bosses.

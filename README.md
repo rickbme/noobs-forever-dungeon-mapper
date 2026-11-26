@@ -118,7 +118,8 @@ remakes with different layouts, so we place them by hand instead.
 ### Help map the bosses
 
 Options > *Help map the bosses*: click a boss in the map's list, then click where it is on the map. Your pin
-appears at once and is saved. *Share my boss pins* shows your pins as text to copy and send to us (for example
+appears at once and is saved. A toolbar over the map has **Undo**, **Remove pin** and **Done**; you can also drag
+a pin to move it, and right-click your own pin to remove it. *Share my boss pins* shows your pins as text to copy and send to us (for example
 in the Noobs Forever Discord), and we add them for everyone.
 
 ## How the data is made

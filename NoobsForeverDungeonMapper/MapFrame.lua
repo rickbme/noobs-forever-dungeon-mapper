@@ -47,6 +47,17 @@ local function SmallButton(parent, text, width)
     return b
 end
 
+-- Where the cursor is on the map, as fractions (0..1 across and down) of the picture; nil if it can't be told.
+local function CursorFraction()
+    local scale = f.canvas:GetEffectiveScale()
+    local left, top = f.canvas:GetLeft(), f.canvas:GetTop()
+    if not (scale and left and top) then return nil end
+    local cx, cy = GetCursorPosition()
+    return (cx / scale - left) / MAP_W, (top - cy / scale) / MAP_H
+end
+
+local function Clamp01(v) return math.min(1, math.max(0, v)) end
+
 local function CreatePin(i)
     local p = CreateFrame("Button", nil, f.canvas)
     p:SetSize(22, 22)
@@ -91,9 +102,43 @@ local function CreatePin(i)
     p:SetScript("OnEnter", function(self) ns.ShowBossTooltip(self, self.boss, self.index) end)
     p:SetScript("OnLeave", GameTooltip_Hide)
     p:SetScript("OnClick", function(self, button)
-        if button == "RightButton" then
+        if ns.db.placer then
+            -- mapmaker mode: a click picks the boss to place again, a right-click removes the player's own pin.
+            -- (Marking a kill is for normal use: no accidental ticks while placing pins.)
+            if button == "RightButton" then
+                if ns.HasBossPlace(view.instanceID, self.boss) then
+                    ns.ClearBossPlace(view.instanceID, self.boss)
+                    ns.Refresh()
+                end
+            else
+                ns.StartPlacing(self.index)
+            end
+        elseif button == "RightButton" then
             ns.SetKilled(view.instanceID, self.boss, not ns.IsKilled(view.instanceID, self.boss))
         end
+    end)
+    -- mapmaker mode: drag a pin to move it
+    p:RegisterForDrag("LeftButton")
+    p:SetScript("OnDragStart", function(self)
+        if not (ns.db.placer and self.boss) then return end
+        self.dragging = true
+        self:SetScript("OnUpdate", function(s)
+            local x, y = CursorFraction()
+            if x then
+                s:ClearAllPoints()
+                s:SetPoint("CENTER", f.canvas, "TOPLEFT", Clamp01(x) * MAP_W, -Clamp01(y) * MAP_H)
+            end
+        end)
+    end)
+    p:SetScript("OnDragStop", function(self)
+        if not self.dragging then return end
+        self.dragging = false
+        self:SetScript("OnUpdate", nil)
+        local x, y = CursorFraction()
+        if x and self.boss and view.floor then
+            ns.SetBossPlace(view.instanceID, self.boss, view.floor, Clamp01(x), Clamp01(y))
+        end
+        ns.Refresh()
     end)
     pins[i] = p
     return p
@@ -117,10 +162,18 @@ local function CreateRow(i)
     r:SetScript("OnEnter", function(self) ns.ShowBossTooltip(self, self.boss, self.index) end)
     r:SetScript("OnLeave", GameTooltip_Hide)
     r:SetScript("OnClick", function(self, button)
-        if button == "RightButton" then
+        if ns.db.placer then
+            -- mapmaker mode: click picks the boss to place; right-click removes the player's own pin
+            if button == "RightButton" then
+                if ns.HasBossPlace(view.instanceID, self.boss) then
+                    ns.ClearBossPlace(view.instanceID, self.boss)
+                    ns.Refresh()
+                end
+            elseif view.floor then
+                ns.StartPlacing(self.index)
+            end
+        elseif button == "RightButton" then
             ns.SetKilled(view.instanceID, self.boss, not ns.IsKilled(view.instanceID, self.boss))
-        elseif ns.db.placer and view.floor then
-            ns.StartPlacing(self.index)
         elseif self.boss.floor then
             ns.ShowDungeon(view.instanceID, self.boss.floor)
             local p = pins[self.index]
@@ -173,11 +226,8 @@ local function Create()
     f.canvas:SetScript("OnMouseUp", function(self, button)
         if not placing then return end
         if button == "RightButton" then return ns.CancelPlacing() end
-        local scale = self:GetEffectiveScale()
-        local cx, cy = GetCursorPosition()
-        local left, top = self:GetLeft(), self:GetTop()
-        if not (scale and left and top) then return end
-        ns.PlaceAt((cx / scale - left) / MAP_W, (top - cy / scale) / MAP_H)
+        local x, y = CursorFraction()
+        if x then ns.PlaceAt(x, y) end
     end)
     f.canvas:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
     f.canvas:SetBackdropColor(0, 0, 0, 0.6)
@@ -192,21 +242,44 @@ local function Create()
             f.tiles[#f.tiles + 1] = t
         end
     end
-    f.placeStatus = f.canvas:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    f.placeStatus:SetPoint("TOP", 0, -8)
-    f.placeStatus:SetWidth(MAP_W - 40)
+    -- Mapmaker toolbar (only while mapmaker mode is on): what to do, Undo, Remove pin, Done
+    f.mapper = CreateFrame("Frame", nil, f.canvas)
+    f.mapper:SetPoint("TOPLEFT", 0, 0)
+    f.mapper:SetPoint("TOPRIGHT", 0, 0)
+    f.mapper:SetHeight(30)
+    f.mapper:SetFrameLevel(f.canvas:GetFrameLevel() + 12)
+    f.mapper.bg = f.mapper:CreateTexture(nil, "BACKGROUND")
+    f.mapper.bg:SetAllPoints()
+    f.mapper.bg:SetColorTexture(0, 0, 0, 0.55)
+    f.placeStatus = f.mapper:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    f.placeStatus:SetPoint("LEFT", 8, 0)
+    f.placeStatus:SetWidth(MAP_W - 220)
+    f.placeStatus:SetJustifyH("LEFT")
+    f.placeStatus:SetWordWrap(false)
     f.placeStatus:SetTextColor(0.3, 0.85, 1)
-    f.placeStatus:Hide()
-    f.placeRemove = SmallButton(f.canvas, "Remove my pin", 110)
-    f.placeRemove:SetPoint("TOP", f.placeStatus, "BOTTOM", 0, -4)
-    f.placeRemove:SetFrameLevel(f.canvas:GetFrameLevel() + 10)
+    f.placeDone = SmallButton(f.mapper, "Done", 50)
+    f.placeDone:SetPoint("RIGHT", -6, 0)
+    f.placeDone:SetScript("OnClick", function()
+        ns.db.placer = false
+        ns.CancelPlacing()
+        if ns.OptionsRefresh then ns.OptionsRefresh() end
+    end)
+    f.placeRemove = SmallButton(f.mapper, "Remove pin", 80)
+    f.placeRemove:SetPoint("RIGHT", f.placeDone, "LEFT", -4, 0)
     f.placeRemove:SetScript("OnClick", function()
         local d = view.instanceID and ns.Dungeons[view.instanceID]
         local b = d and placing and d.bosses[placing]
         if b then ns.ClearBossPlace(view.instanceID, b) end
         ns.CancelPlacing()
     end)
-    f.placeRemove:Hide()
+    f.placeUndo = SmallButton(f.mapper, "Undo", 50)
+    f.placeUndo:SetPoint("RIGHT", f.placeRemove, "LEFT", -4, 0)
+    f.placeUndo:SetScript("OnClick", function()
+        local b = ns.UndoBossPlace()
+        if b then ns.Print("Undid the last change to " .. b.name .. "'s pin.") end
+        ns.Refresh()
+    end)
+    f.mapper:Hide()
     f.credit = f.canvas:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.credit:SetPoint("BOTTOMRIGHT", -8, 6)
     f.credit:SetTextColor(1, 0.82, 0)
@@ -357,6 +430,7 @@ function ns.ShowBossTooltip(owner, boss, index)
         GameTooltip:AddLine("Next boss", 1, 0.82, 0)
     end
     local d = ns.Dungeons[id]
+    if ns.HasBossPlace(id, boss) then GameTooltip:AddLine("Placed by you", 0.3, 0.85, 1) end
     for _, q in ipairs(view.bossQuests and view.bossQuests[index] or {}) do
         GameTooltip:AddLine("Quest: " .. q.title, 1, 0.82, 0)
     end
@@ -414,6 +488,7 @@ local function DrawPins(d)
                 or (b == nextBoss and COLORS.nextUp) or COLORS.normal
             p.dot:SetVertexColor(c[1], c[2], c[3])
             p.num:SetText(killed and "" or i)
+            if ns.HasBossPlace(view.instanceID, b) then p.border:SetVertexColor(0.2, 0.8, 1, 0.85) else p.border:SetVertexColor(0, 0, 0, 0.45) end
             p.check:SetShown(killed)
             p.quest:SetShown(view.bossQuests and view.bossQuests[i] ~= nil and not killed)
             p.glow:SetShown(b == nextBoss or fighting == b)
@@ -508,18 +583,21 @@ function ns.UpdatePlacerUI()
     local d = view.instanceID and ns.Dungeons[view.instanceID]
     local boss = d and placing and d.bosses[placing]
     f.canvas:EnableMouse(boss ~= nil)
-    if boss then
-        f.placeStatus:SetText(("Placing %s: click the map where it is. Right-click the map to cancel."):format(boss.name))
-        f.placeStatus:Show()
-        f.placeRemove:SetShown(ns.HasBossPlace(view.instanceID, boss))
-    else
-        f.placeStatus:Hide()
-        f.placeRemove:Hide()
+    local mapping = ns.db.placer and true or false
+    f.mapper:SetShown(mapping)
+    if mapping then
+        if boss then
+            f.placeStatus:SetText(("Placing %s: click the map. Right-click to cancel."):format(boss.name))
+        else
+            f.placeStatus:SetText("Mapmaker: pick a boss in the list, then click the map. Drag a pin to move it.")
+        end
+        f.placeRemove:SetEnabled(boss ~= nil and ns.HasBossPlace(view.instanceID, boss))
+        f.placeUndo:SetEnabled(ns.CanUndoBossPlace())
     end
     if ns.db.panel == "quests" then
         f.listHint:SetText("Quests from your quest log that belong to this dungeon. A ! marks the boss a quest names.")
     else
-        local hint = ns.db.placer and "Mapmaker mode: click a boss, then click the map. Right-click a boss: mark killed."
+        local hint = ns.db.placer and "Mapmaker mode: click a boss, then click the map. Right-click one of your own pins to remove it."
             or f.listHintDefault
         -- say why bosses are missing from the map, and how to add them
         local missing = 0
