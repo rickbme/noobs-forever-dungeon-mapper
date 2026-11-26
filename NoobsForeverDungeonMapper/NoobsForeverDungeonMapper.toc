@@ -4,7 +4,7 @@
 ## Title: Noobs Forever Dungeon Mapper
 ## Notes: Shows the dungeon map when you enter a dungeon in WoW Forever, with floors, boss pins and kill progress.
 ## Author: rickbme
-## Version: 0.2.3-beta
+## Version: 0.2.4-beta
 ## Category: Map
 ## IconTexture: Interface\Icons\INV_Misc_Map_01
 ## SavedVariables: NoobsForeverDungeonMapperDB
