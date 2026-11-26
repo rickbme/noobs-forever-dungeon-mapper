@@ -194,3 +194,14 @@ Feedback from guild testers, and what was done:
   windows fade to `moveOpacity` (default 35%, never above the normal opacity) in about a quarter of a second, and
   back when they stop; a window the mouse is over stays solid. On by default (`moveFade`), options for both. Unverified
   in the game: that `IsPlayerMoving` / `GetUnitSpeed` answer for the player on Forever and aren't secret values.
+
+## Status 2026-11-25 (odd squares on the Deadmines map)
+
+- Guild report (vee, with screenshots): on the Deadmines floor 1 map some whole 256 px tiles are drawn bright and the
+  rest darkened, in blocks ("the weird squares that are different colors"). This is almost certainly the earlier
+  "greyed out parts" bug. Checked here: all 636 Blizzard tiles in `Dungeons.lua` exist in the enUS install and
+  Deadmines floor 1 renders correctly from the files, so the cause is on that player's side (game language, graphics or
+  texture settings, or another addon). Not yet understood.
+- Added to `/fd probe`: game language and build, and whether the client finds each tile of the floor on screen
+  (`C_Texture.GetTextureInfo`). Next: get vee's probe output and language; if tiles are "not found" the fix is OpenMap's
+  (copy the tiles into the addon, `Media/Textures/MapTile`, as in its `Data/Forever/Tiles.lua`).

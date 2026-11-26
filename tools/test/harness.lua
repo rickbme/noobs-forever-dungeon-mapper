@@ -114,6 +114,8 @@ function GetMinimapZoneText() return game.subzone end
 function IsIndoors() return true end
 function GetUnitSpeed() return game.speed or 0, 7, 7, 4.7 end
 function IsPlayerMoving() return game.moving end
+function GetLocale() return "enUS" end
+function GetBuildInfo() return "1.60.1", "70959", "Nov 1 2026", 160001 end
 function UnitPosition() return nil end
 function GetPlayerFacing() return nil end
 -- a tiny map tree: Elwynn Forest (1429) is in the Eastern Kingdoms (1415), Durotar (1411) in Kalimdor (1414)
@@ -666,6 +668,22 @@ game.moving = false
 Settle()
 ns.HideWorldMap()
 ns.HideMap()
+
+realPrint("The probe checks the map tiles")
+ns.ShowDungeon(48, 1)
+C_Texture = { GetTextureInfo = function(t) if t == ns.Dungeons[48].floors[1].tiles[4] then return nil end return { width = 256, height = 256 } end }
+printed = {}
+SlashCmdList.NOOBSFOREVERDUNGEONMAPPER("probe")
+local probeText = table.concat(printed, "\n")
+check(probeText:find("tiles not found: 4", 1, true), "the probe names the tile the client can't find")
+check(probeText:find("Game language enUS, build 70959", 1, true), "the probe reports the language and build")
+C_Texture = { GetTextureInfo = function() return { width = 256, height = 256 } end }
+printed = {}
+SlashCmdList.NOOBSFOREVERDUNGEONMAPPER("probe")
+check(table.concat(printed, "\n"):find("all 12 tiles", 1, true), "the probe says when all the tiles are found")
+C_Texture = nil
+ns.HideMap()
+ns.db.probe = nil
 
 realPrint("Boss pins from OpenMap and the placer")
 local pinned = 0

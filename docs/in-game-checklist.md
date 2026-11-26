@@ -59,6 +59,10 @@ Go into any dungeon (The Hall of Thanes is best, then Ragefire Chasm or Deadmine
 - [ ] After you kill a boss, it goes grey with a tick and the next boss pulses gold.
 - [ ] If the dungeon has more than one floor, the < and > buttons change floor.
       Only the bosses of the floor you are looking at have red markers; the old floor's markers disappear.
+- [ ] The whole map picture looks even. **If some square blocks of the map are bright and others dark, or odd
+      colours:** open that map and type `/fd probe`. It prints your game language and build and says whether
+      all the map tiles were found. Screenshot the chat lines, plus the map itself, and tell us which dungeon and
+      floor, and whether you use other map or UI addons.
 - [ ] For a new dungeon: the map is Santiago Reyes' drawing, with **"Map by Santiago Reyes"** at the bottom
       right and his watermark still visible.
 - [ ] In **The Hall of Thanes**: walking into a new area moves a blue ring on the map ("you are here").

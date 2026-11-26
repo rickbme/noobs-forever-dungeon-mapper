@@ -101,6 +101,23 @@ local function Store()
     return ns.db.probe
 end
 
+-- Whether this client can find the picture tiles of the floor on screen (a tile it can't find draws as a wrong-
+-- coloured square). Reported by /fd probe together with the game's language and build.
+local function TileReport()
+    local id, floor = ns.ViewedInstance(), ns.ViewedFloor()
+    local d = id and ns.Dungeons[id]
+    local f = d and floor and d.floors[floor]
+    if not f then return "open a dungeon's map first, then run this again" end
+    if not (C_Texture and C_Texture.GetTextureInfo) then return "can't be checked on this client" end
+    local missing = {}
+    for i, tile in ipairs(f.tiles) do
+        local ok, info = pcall(C_Texture.GetTextureInfo, tile)
+        if not (ok and type(info) == "table" and info.width) then missing[#missing + 1] = i end
+    end
+    if #missing == 0 then return ("all %d tiles of %s found"):format(#f.tiles, f.name) end
+    return ("%s: tiles not found: %s (of %d)"):format(f.name, table.concat(missing, ", "), #f.tiles)
+end
+
 function ns.Probe(arg)
     arg = arg or ""
     if arg == "clear" then
@@ -117,10 +134,14 @@ function ns.Probe(arg)
         for _, r in ipairs(results) do ns.Print("  " .. r[1] .. " = " .. r[2]) end
         ns.Print(any and "|cff20ff20A position API answered with numbers.|r"
             or "|cffffd100No position API gave a number: only sub-zone anchors are possible here.|r")
+        local locale, build = GetLocale and GetLocale() or "?", select(2, GetBuildInfo())
+        local tiles = TileReport()
+        ns.Print(("  Game language %s, build %s"):format(tostring(locale), tostring(build)))
+        ns.Print("  Map tiles: " .. tiles)
         local progress = BossProgress()
         ns.Print("  Boss progress from the game: " .. (progress or "not available"))
         local store = Store()
-        store.last = { t = time(), instance = ns.Safe(instanceID), anyPosition = any, results = {}, bossProgress = progress }
+        store.last = { t = time(), instance = ns.Safe(instanceID), anyPosition = any, results = {}, bossProgress = progress, locale = locale, build = build, tiles = tiles }
         for _, r in ipairs(results) do store.last.results[r[1]] = r[2] end
     end
 end

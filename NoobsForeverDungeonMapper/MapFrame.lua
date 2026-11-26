@@ -624,6 +624,7 @@ function ns.SetFighting(boss)
 end
 
 function ns.ViewedInstance() return view.instanceID end
+function ns.ViewedFloor() return view.floor end
 
 function ns.HideMap() if f then f:Hide() end end
 
