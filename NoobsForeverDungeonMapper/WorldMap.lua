@@ -214,19 +214,22 @@ local function Create()
         end
     end
 
-    -- Buttons along the bottom: pick the map, go back to a dungeon
-    f.tabs = {}
-    local prev
-    for _, uiMapID in ipairs({ WORLD, 1415, 1414 }) do
-        local data = MapData(uiMapID)
-        if data then
-            local b = SmallButton(f, data.name, uiMapID == WORLD and 80 or 130)
-            b:SetPoint("TOPLEFT", prev or f.canvas, prev and "TOPRIGHT" or "BOTTOMLEFT", prev and 4 or 0, prev and 0 or -8)
-            b:SetScript("OnClick", function() ns.ShowWorldMap(uiMapID) end)
-            f.tabs[uiMapID] = b
-            prev = b
+    -- Zooming: the mouse wheel zooms in on the continent under the cursor and back out; this button
+    -- is the visible way out for anyone who doesn't think of the wheel
+    f.zoomOut = SmallButton(f, "Zoom out", 90)
+    f.zoomOut:SetPoint("TOPLEFT", f.canvas, "BOTTOMLEFT", 0, -8)
+    f.zoomOut:SetScript("OnClick", function() ns.WorldZoom(-1) end)
+    f:EnableMouseWheel(true)
+    f:SetScript("OnMouseWheel", function(_, delta)
+        local x, y
+        local scale = f.canvas:GetEffectiveScale()
+        local left, top = f.canvas:GetLeft(), f.canvas:GetTop()
+        if scale and left and top then
+            local cx, cy = GetCursorPosition()
+            x, y = (cx / scale - left) / MAP_W, (top - cy / scale) / MAP_H
         end
-    end
+        ns.WorldZoom(delta, x, y)
+    end)
     -- "You are here": where the game says the player is, when they are outdoors
     f.me = CreateFrame("Button", nil, f.canvas)
     f.me:SetSize(24, 24)
@@ -259,8 +262,8 @@ local function Create()
         ns.ShowLastDungeon()
     end)
     f.hint = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.hint:SetPoint("LEFT", prev, "RIGHT", 14, 0)
-    f.hint:SetText("Click an entrance to open that dungeon's map.")
+    f.hint:SetPoint("LEFT", f.zoomOut, "RIGHT", 14, 0)
+    f.hint:SetText("Scroll the mouse wheel to zoom in on a continent and back out. Click an entrance to open that dungeon's map.")
 
     f.pins = pins -- (the offline tests click them)
     f:Hide()
@@ -306,7 +309,7 @@ local function Draw()
             r:SetScript("OnEnter", function(self)
                 GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
                 GameTooltip:SetText(self.name or "")
-                GameTooltip:AddLine("Click to zoom in.", 1, 0.82, 0)
+                GameTooltip:AddLine("Scroll up or click to zoom in.", 1, 0.82, 0)
                 GameTooltip:Show()
             end)
             r:SetScript("OnLeave", GameTooltip_Hide)
@@ -320,7 +323,7 @@ local function Draw()
         r:SetPoint("TOPLEFT", f.canvas, "TOPLEFT", sub[2] * MAP_W, -sub[3] * MAP_H)
         r:Show()
     end
-    for uiMapID, b in pairs(f.tabs) do b:SetEnabled(uiMapID ~= data.uiMapID) end
+    f.zoomOut:SetShown(data.uiMapID ~= WORLD)
     UpdateMarker()
 end
 
@@ -363,6 +366,35 @@ function ns.ShowWorldMap(uiMapID)
     f:SetScale(ns.db.scale or 1)
     f:Show()
     Draw()
+end
+
+-- The continent of the world map's `sub` list the point (x, y) (0..1) is over, else the nearest one.
+local function ContinentAt(data, x, y)
+    local best, bestD
+    for _, sub in ipairs(data.sub or {}) do
+        if x and x >= sub[2] and x <= sub[2] + sub[4] and y >= sub[3] and y <= sub[3] + sub[5] then return sub[1] end
+        if x then
+            local d = (x - (sub[2] + sub[4] / 2)) ^ 2 + (y - (sub[3] + sub[5] / 2)) ^ 2
+            if not bestD or d < bestD then best, bestD = sub[1], d end
+        elseif sub[1] == ns.db.worldMap then
+            best = sub[1]
+        end
+    end
+    return best or (data.sub and data.sub[1] and data.sub[1][1])
+end
+
+-- Zoom with the mouse wheel: delta > 0 zooms in on the continent at (x, y) of the world map; delta < 0
+-- zooms back out to the world map.
+function ns.WorldZoom(delta, x, y)
+    if not current then return end
+    if delta > 0 then
+        if current.uiMapID == WORLD then
+            local continent = ContinentAt(current, x, y)
+            if continent then ns.ShowWorldMap(continent) end
+        end
+    elseif current.uiMapID ~= WORLD then
+        ns.ShowWorldMap(WORLD)
+    end
 end
 
 function ns.ToggleWorldMap()

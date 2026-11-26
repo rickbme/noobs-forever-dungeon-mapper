@@ -23,7 +23,8 @@ Work in progress (beta): it has not been tested in the live game yet.
 - **Browse anywhere**: `/fd list` (or right-click in the addon compartment) opens any dungeon's map.
 - **World map**: outside a dungeon, the minimap button opens the world map on the continent you are standing on,
   with a green marker where you are (the game only tells addons your position outdoors). Every dungeon and raid
-  entrance is marked on it. In a dungeon, use the **World map** button (or the minimap button's right-click menu,
+  entrance is marked on it. Scroll the mouse wheel to zoom in on a continent and back out (or click a continent,
+  or use the *Zoom out* button). In a dungeon, use the **World map** button (or the minimap button's right-click menu,
   or `/fd world`) to zoom out to Azeroth or either continent. Hover an entrance for levels and
   boss progress, click it to open that dungeon's map. The map art is the game's own, drawn from the client.
 - **Difficulty colours**: dungeon levels are coloured like the game's quests, for your level (red too hard,

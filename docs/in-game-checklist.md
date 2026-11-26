@@ -32,7 +32,9 @@ and copy any red error text. That's all we need.
 - [ ] Click the minimap button again: it hides. In *Options*, "Outside dungeons, open the world map where I
       am" turns this off (the button then opens the last dungeon's map instead).
 - [ ] Open it from a dungeon (*World map* button, the minimap right-click menu, or its key). Azeroth shows with red dots.
-- [ ] Clicking *Eastern Kingdoms* or *Kalimdor* (the buttons below the map, or the continent itself) zooms in.
+- [ ] On the Azeroth map, scroll the mouse wheel **up** over a continent: it zooms in on that continent.
+      Scroll **down** to zoom back out. Clicking a continent also zooms in, and the *Zoom out* button (bottom left)
+      zooms out. Does the wheel feel natural? Does it pick the continent you pointed at?
 - [ ] Dungeon entrances are small blue swirl icons (the game's own dungeon icon if it has one, otherwise our
       swirl); raids are purple. Tell us which style you see.
 - [ ] The icons sit on the right places: for example Deadmines in Westfall, Stockade in Stormwind,

@@ -173,3 +173,9 @@ Feedback from guild testers, and what was done:
   their goals, and a gold ! on bosses a quest names (pin and list). Matching is by the quest log's zone heading,
   the dungeon's name in the title, or boss names in a title or goal. Recorded to `questScan` when `/fd probe log`
   is on. Untested in game: how Forever files and words dungeon quests is exactly what the matching depends on.
+
+## Status 2026-11-25 (world map zoom)
+
+- The continent tabs on the world map are replaced by mouse wheel zoom (wheel up over a continent zooms in on it,
+  wheel down zooms out; over the sea it picks the nearest continent) plus a visible *Zoom out* button and a hint line.
+  Clicking a continent still works. The cursor-to-map conversion is untested in game (same maths as the pin placer).

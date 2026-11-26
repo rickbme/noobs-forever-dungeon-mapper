@@ -278,6 +278,32 @@ check(iconPin.icon.atlas == "Dungeon", "the game's own Dungeon icon is used when
 C_Texture = nil
 ns.HideWorldMap()
 
+realPrint("The mouse wheel zooms the world map")
+ns.ShowWorldMap(947)
+local zw = NoobsForeverDungeonMapperWorld
+check(not zw.zoomOut:IsShown(), "no Zoom out button on the world map itself")
+ns.WorldZoom(1, 0.72, 0.40)
+check(zw.title:GetText() == "Eastern Kingdoms", "wheel up over the Eastern Kingdoms zooms in on them")
+check(zw.zoomOut:IsShown(), "the Zoom out button shows on a continent")
+ns.WorldZoom(1, 0.20, 0.50)
+check(zw.title:GetText() == "Eastern Kingdoms", "wheel up on a continent does nothing more")
+ns.WorldZoom(-1)
+check(zw.title:GetText() == "Azeroth", "wheel down zooms back out")
+ns.WorldZoom(-1)
+check(zw.title:GetText() == "Azeroth", "wheel down on the world map does nothing")
+ns.WorldZoom(1, 0.20, 0.50)
+check(zw.title:GetText() == "Kalimdor", "wheel up over Kalimdor zooms in on it")
+ns.WorldZoom(-1)
+ns.WorldZoom(1, 0.46, 0.50)
+check(zw.title:GetText() == "Kalimdor", "wheel up over the sea picks the nearest continent")
+zw.zoomOut.scripts.OnClick()
+check(zw.title:GetText() == "Azeroth", "the Zoom out button zooms out")
+zw.scripts.OnMouseWheel(zw, 1)
+check(zw.title:GetText() ~= "Azeroth", "the wheel works on the window even without a cursor position")
+zw.scripts.OnMouseWheel(zw, -1)
+check(zw.title:GetText() == "Azeroth", "and zooms back out")
+ns.HideWorldMap()
+
 realPrint("The map button opens the world map where the player is")
 local world2
 ns.HideMap(); ns.HideWorldMap()
