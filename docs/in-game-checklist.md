@@ -132,6 +132,10 @@ map with **Undo**, **Remove pin** and **Done** buttons.
 - [ ] *Done* ends mapmaker mode (so right-click marks kills again).
 - [ ] In Options, *Import guild pins* opens a box: paste the guild's block of `NFDM|...` lines, press *Import*, and the
       bosses it covers get pins (purple ring, "From the guild's shared pins" in the tooltip). Your own pins always win.
+- [ ] **Several dungeons before sharing:** place pins in two or three dungeons, then open *Share my boss pins*. One list
+      holds all of them. After pasting into Discord press *I've sent these*; the next time only new or moved pins are
+      offered, and *Show all my pins* shows everything. With many pins it splits into "Message 1 of N" pages that each
+      fit in a Discord message.
 - [ ] In Options, *Share my boss pins* shows your pins as text. Click inside it, press Ctrl+A, then Ctrl+C,
       and paste it in the Noobs Forever Discord's `#addon-data` channel. The window explains these three steps, and
       says nothing is sent automatically. Is it clear? Placing a pin should print only one short line in chat, with the

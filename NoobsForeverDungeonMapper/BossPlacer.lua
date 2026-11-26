@@ -171,21 +171,65 @@ function ns.ApplyBossPlaces()
     end
 end
 
--- The placed pins as lines of text, one per boss: NFDM|id|dungeon|boss|floor|x|y
-function ns.ExportBossPlaces()
-    local lines = {}
+-- A random code, made once per install, that goes on each exported line. It isn't a name and says nothing about
+-- the player; it only lets whoever merges the pins tell "the same player sent this again (maybe moved)" from "a
+-- second player agrees", so a player's latest pin replaces their earlier one.
+function ns.Contributor()
+    if not ns.db.contributor then ns.db.contributor = ("%06x"):format(math.random(0, 0xFFFFFF)) end
+    return ns.db.contributor
+end
+
+local function Signature(p) return ("%d|%.4f|%.4f"):format(p[1], p[2], p[3]) end
+
+function ns.CountPlacedPins()
+    local n = 0
+    for _, places in pairs(ns.db.bossPlaces) do for _ in pairs(places) do n = n + 1 end end
+    return n
+end
+
+-- The placed pins as lines of text, one per boss: NFDM|id|dungeon|boss|floor|x|y|contributor code.
+-- Only the ones not yet marked as sent (new, or moved since), unless `all` is true.
+function ns.ExportBossPlaces(all)
+    local lines, code = {}, ns.Contributor()
     for _, id in ipairs(ns.DungeonOrder) do
         local places = ns.db.bossPlaces[id]
         if places then
             for _, b in ipairs(ns.Dungeons[id].bosses) do
                 local p = places[b.name]
-                if p then
-                    lines[#lines + 1] = ("NFDM|%d|%s|%s|%d|%.4f|%.4f"):format(id, ns.Dungeons[id].name, b.name, p[1], p[2], p[3])
+                local sent = ns.db.sentPins[id] and ns.db.sentPins[id][b.name]
+                if p and (all or sent ~= Signature(p)) then
+                    lines[#lines + 1] = ("NFDM|%d|%s|%s|%d|%.4f|%.4f|%s"):format(id, ns.Dungeons[id].name, b.name, p[1], p[2], p[3], code)
                 end
             end
         end
     end
     return lines
+end
+
+-- Remember that the player has sent all their current pins, so the next Share only offers new or moved ones.
+function ns.MarkPinsSent()
+    ns.db.sentPins = {}
+    for id, places in pairs(ns.db.bossPlaces) do
+        ns.db.sentPins[id] = {}
+        for name, p in pairs(places) do ns.db.sentPins[id][name] = Signature(p) end
+    end
+end
+
+-- Discord takes 2000 characters a message: split lines into pages that each fit (with the heading).
+local HEADING = "# Noobs Forever Dungeon Mapper boss pins"
+local PAGE_LIMIT = 1800
+function ns.PinPages(lines)
+    local pages, cur, len = {}, {}, #HEADING + 1
+    for _, line in ipairs(lines) do
+        if len + #line + 1 > PAGE_LIMIT and #cur > 0 then
+            pages[#pages + 1] = cur
+            cur, len = {}, #HEADING + 1
+        end
+        cur[#cur + 1] = line
+        len = len + #line + 1
+    end
+    if #cur > 0 then pages[#pages + 1] = cur end
+    return pages
 end
 
 -------------------------------------------------------------------------------
@@ -194,15 +238,36 @@ end
 
 local share
 
-function ns.ShowShareWindow()
-    local lines = ns.ExportBossPlaces()
+local function RefreshShare()
+    local lines = ns.ExportBossPlaces(share.showAll)
+    local total = ns.CountPlacedPins()
+    local pages = ns.PinPages(lines)
+    share.page = math.max(1, math.min(share.page or 1, math.max(#pages, 1)))
     if #lines == 0 then
+        share.box:SetText("")
+        share.status:SetText(("No new pins to send: all %d of your pins are marked as sent."):format(total))
+    else
+        share.box:SetText(HEADING .. "\n" .. table.concat(pages[share.page], "\n"))
+        local text = ("%d pin(s) %s (%d in all)."):format(#lines, share.showAll and "shown" or "to send", total)
+        if #pages > 1 then text = text .. ("  Message %d of %d: paste each as its own message."):format(share.page, #pages) end
+        share.status:SetText(text)
+    end
+    share.prev:SetShown(#pages > 1)
+    share.next:SetShown(#pages > 1)
+    share.prev:SetEnabled(share.page > 1)
+    share.next:SetEnabled(share.page < #pages)
+    share.toggle:SetText(share.showAll and "Show only new pins" or "Show all my pins")
+    share.sent:SetEnabled(#lines > 0)
+end
+
+function ns.ShowShareWindow()
+    if ns.CountPlacedPins() == 0 then
         ns.Print("You haven't placed any boss pins yet. Turn on \"Help map the bosses\" in the options first.")
         return
     end
     if not share then
         share = CreateFrame("Frame", "NoobsForeverDungeonMapperShare", UIParent, "BackdropTemplate")
-        share:SetSize(460, 330)
+        share:SetSize(460, 420)
         share:SetPoint("CENTER")
         share:SetFrameStrata("DIALOG")
         share:SetToplevel(true)
@@ -223,16 +288,40 @@ function ns.ShowShareWindow()
         help:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
         help:SetWidth(420)
         help:SetJustifyH("LEFT")
-        help:SetText("1. Click in the box below.\n2. Press Ctrl+A to select everything, then Ctrl+C to copy.\n3. Open Discord, go to the #addon-data channel and press Ctrl+V to paste.\n|cff9d9d9dNothing is sent automatically. Thank you for helping!|r")
+        help:SetText("1. Click in the box below.\n2. Press Ctrl+A to select everything, then Ctrl+C to copy.\n3. Open Discord, go to the #addon-data channel and press Ctrl+V to paste.\n4. Come back and press \"I've sent these\", so next time only new pins are offered.\n|cff9d9d9dNothing is sent automatically. Thank you for helping!|r")
+        share.status = share:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        share.status:SetPoint("TOPLEFT", help, "BOTTOMLEFT", 0, -10)
+        share.status:SetWidth(420)
+        share.status:SetJustifyH("LEFT")
         share.box = CreateFrame("EditBox", nil, share)
         share.box:SetMultiLine(true)
         share.box:SetFontObject("ChatFontNormal")
-        share.box:SetSize(420, 150)
-        share.box:SetPoint("TOPLEFT", help, "BOTTOMLEFT", 0, -12)
+        share.box:SetSize(420, 140)
+        share.box:SetPoint("TOPLEFT", share.status, "BOTTOMLEFT", 0, -8)
         share.box:SetAutoFocus(false)
         share.box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+        local function B(text, width) local b = CreateFrame("Button", nil, share, "UIPanelButtonTemplate"); b:SetSize(width, 24); b:SetText(text); return b end
+        share.prev = B("< Previous", 90)
+        share.prev:SetPoint("BOTTOMLEFT", 20, 52)
+        share.prev:SetScript("OnClick", function() share.page = share.page - 1; RefreshShare() end)
+        share.next = B("Next >", 90)
+        share.next:SetPoint("LEFT", share.prev, "RIGHT", 6, 0)
+        share.next:SetScript("OnClick", function() share.page = share.page + 1; RefreshShare() end)
+        share.toggle = B("Show all my pins", 150)
+        share.toggle:SetPoint("BOTTOMLEFT", 20, 18)
+        share.toggle:SetScript("OnClick", function() share.showAll = not share.showAll; share.page = 1; RefreshShare() end)
+        share.sent = B("I've sent these", 130)
+        share.sent:SetPoint("LEFT", share.toggle, "RIGHT", 8, 0)
+        share.sent:SetScript("OnClick", function()
+            ns.MarkPinsSent()
+            share.showAll = false
+            share.page = 1
+            RefreshShare()
+        end)
+        share.showAll, share.page = false, 1
     end
-    share.box:SetText("# Noobs Forever Dungeon Mapper boss pins\n" .. table.concat(lines, "\n"))
+    share.page = 1
+    RefreshShare()
     share:Show()
 end
 

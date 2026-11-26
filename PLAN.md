@@ -268,3 +268,10 @@ Feedback from guild testers, and what was done:
   in-game sync for now. The Share and Import windows now spell out three plain steps and say nothing is sent
   automatically; placing a pin prints one short line, with the longer explanation only for the first pin of a session.
   The ask cards are unchanged (short, once per dungeon / boss, with a Don't ask me again box).
+
+## Status 2026-11-25 (several dungeons before sharing)
+
+- Pins were already kept per dungeon and boss across sessions and exported together. Added: a random contributor code on
+  each line (`NFDM|...|code`), "sent" tracking (`sentPins`: new or moved pins only, Show all / I've sent these), pages that
+  fit Discord's 2000-character message, and in `tools/ingest_pins.py` one opinion per contributor with the latest winning
+  (submissions kept oldest first; a line sent again moves to the end). Docs: docs/boss-pins.md.

@@ -362,7 +362,7 @@ ns.ShowDungeon(34, 1)
 ns.StartPlacing(1)
 ns.PlaceAt(0.2, 0.3)
 local exported = ns.ExportBossPlaces()
-check(#exported == 1 and exported[1] == "NFDM|34|Stormwind Stockade|Targorr the Dread|1|0.2000|0.3000", "an exported pin line starts with the NFDM marker")
+check(#exported == 1 and exported[1]:find("^NFDM|34|Stormwind Stockade|Targorr the Dread|1|0.2000|0.3000|%x%x%x%x%x%x$"), "an exported pin line starts with the NFDM marker and ends with the contributor code")
 ns.ClearBossPlace(34, targorr)
 while ns.CanUndoBossPlace() do ns.UndoBossPlace() end
 ns.db.bossPlaces = {}
@@ -431,6 +431,71 @@ check(printed[1] and printed[1]:find("pin placed.", 1, true) and not printed[1]:
 check(#printed == 1, "and print a single line")
 while ns.CanUndoBossPlace() do ns.UndoBossPlace() end
 ns.db.bossPlaces = {}
+ns.db.placer = false
+ns.HideMap()
+
+realPrint("Several dungeons: pages, new-versus-sent, contributor code")
+ns.db.bossPlaces, ns.db.sentPins, ns.db.contributor = {}, {}, nil
+ns.db.placer = true
+local function PlacePin(id, index, x, y) ns.ShowDungeon(id, 1); ns.StartPlacing(index); ns.PlaceAt(x, y) end
+PlacePin(34, 1, 0.2, 0.3); PlacePin(389, 1, 0.4, 0.4); PlacePin(389, 2, 0.6, 0.6)
+local mycode = ns.Contributor()
+check(mycode:match("^%x%x%x%x%x%x$") and ns.Contributor() == mycode, "the contributor code is six hex digits and stays the same")
+check(#ns.ExportBossPlaces(true) == 3 and ns.CountPlacedPins() == 3, "one export holds the pins of several dungeons")
+check(ns.ExportBossPlaces(true)[1]:find("|" .. mycode .. "$"), "every line ends with the contributor code")
+check(#ns.ExportBossPlaces() == 3, "nothing is marked sent yet, so all three are new")
+ns.MarkPinsSent()
+check(#ns.ExportBossPlaces() == 0 and #ns.ExportBossPlaces(true) == 3, "after marking sent only 'show all' lists them")
+PlacePin(389, 1, 0.45, 0.4)
+check(#ns.ExportBossPlaces() == 1, "a pin moved after sending is offered again")
+local imp, bad = ns.ImportGuildPins("NFDM|34|Stormwind Stockade|Hamhock|1|0.8000|0.4500|abc123")
+check(imp == 1 and #bad == 0, "import accepts a line that has the contributor code")
+ns.ClearGuildPins()
+local long = {}
+for i = 1, 100 do long[i] = ("NFDM|389|Ragefire Chasm|Boss number %03d|1|0.1234|0.5678|abcdef"):format(i) end
+local pages = ns.PinPages(long)
+local total, ordered, fits = 0, true, true
+local expect = 1
+for _, pg in ipairs(pages) do
+    total = total + #pg
+    local len = #"# Noobs Forever Dungeon Mapper boss pins"
+    for _, line in ipairs(pg) do len = len + #line + 1; if line ~= long[expect] then ordered = false end; expect = expect + 1 end
+    if len > 2000 then fits = false end
+end
+check(#pages > 1 and total == 100 and ordered, "100 lines are split into several pages with none lost or reordered")
+check(fits, "every page fits in one Discord message (2000 characters)")
+ns.ShareTest = true
+ns.db.sentPins = {}
+ns.ShowShareWindow()
+local sw = NoobsForeverDungeonMapperShare
+check(sw:IsShown() and sw.status:GetText():find("3 pin(s) to send (3 in all)", 1, true), "the Share window says how many pins are to send")
+check(sw.box:GetText():find("^# Noobs Forever Dungeon Mapper boss pins\nNFDM|"), "and shows them under a heading")
+sw.sent.scripts.OnClick()
+check(sw.status:GetText():find("No new pins to send: all 3", 1, true) and sw.box:GetText() == "", "'I've sent these' empties it")
+sw.toggle.scripts.OnClick()
+check(sw.status:GetText():find("3 pin(s) shown", 1, true) and sw.box:GetText():find("NFDM|", 1, true), "'Show all my pins' lists them again")
+sw.toggle.scripts.OnClick()
+while ns.CanUndoBossPlace() do ns.UndoBossPlace() end -- put the real bosses back as they were
+ns.db.bossPlaces = {}
+for id, d in pairs(ns.Dungeons) do
+    if #d.floors > 0 then
+        ns.db.bossPlaces[id] = {}
+        for _, b in ipairs(d.bosses) do ns.db.bossPlaces[id][b.name] = { 1, 0.5, 0.5 } end
+    end
+end
+ns.db.sentPins = {}
+ns.ShowShareWindow()
+check(sw.status:GetText():find("Message 1 of ", 1, true) and sw.next:IsShown(), "many pins are shown a page (Discord message) at a time")
+local firstPage = sw.box:GetText()
+sw.next.scripts.OnClick()
+check(sw.status:GetText():find("Message 2 of ", 1, true) and sw.box:GetText() ~= firstPage and sw.prev.enabled == true, "Next moves to the next page")
+check(#sw.box:GetText() <= 2000, "each page fits in a Discord message")
+sw.prev.scripts.OnClick()
+check(sw.box:GetText() == firstPage, "Previous goes back")
+sw.sent.scripts.OnClick()
+check(#ns.ExportBossPlaces() == 0, "marking sent covers every page")
+ns.db.bossPlaces, ns.db.sentPins = {}, {}
+sw:Hide()
 ns.db.placer = false
 ns.HideMap()
 

@@ -8,8 +8,11 @@ and paste them to the guild (the Discord boss pins channel). Give this tool a te
 those messages; Discord quoting, `code ticks` and chatter around the lines are ignored. It
 
   1. checks each line against the game data (dungeon, boss, floor, 0..1 position) and skips bad ones,
-  2. adds the new ones to tools/pins/submissions.txt (the record of everything received, one line per pin),
-  3. for each boss takes the floor most people chose and the MEDIAN position, and uses the group of
+  2. adds the new ones to tools/pins/submissions.txt (the record of everything received, oldest first, one line
+     per pin; a line sent again moves to the end),
+  3. for each boss counts ONE opinion per player (lines carry a random six-digit hex code, no name: a player's
+     latest pin for a boss replaces their earlier ones), takes the floor most people chose and the MEDIAN
+     position, and uses the group of
      players who agree within --spread (default 0.10 of the map) when they are a majority and ignores the
      far-off ones, and flags bosses where no majority agrees (leaving those out unless --accept-conflicts), and
   4. rewrites Data/BossPlaces.lua from all submissions.
@@ -68,7 +71,8 @@ def load_dungeons():
 
 
 def parse_line(line, dungeons):
-    """-> (pin tuple, None) for a good pin line, (None, reason) for a bad one, (None, None) for chatter"""
+    """-> (pin tuple, None) for a good pin line, (None, reason) for a bad one, (None, None) for chatter.
+    A pin is (id, boss, floor, x, y, contributor code or None)."""
     line = re.sub(r"^[\s>`]+", "", line)
     line = re.sub(r"[\s`]+$", "", line)
     m = re.match(r"^NFDM\|(.*)$", line)
@@ -93,12 +97,14 @@ def parse_line(line, dungeons):
         return None, "%s: floor %d isn't one of %s's" % (boss, floor, d["name"])
     if not (0 <= x <= 1 and 0 <= y <= 1):
         return None, "%s: position off the map" % boss
-    return (mid, boss, floor, round(x, 4), round(y, 4)), None
+    code = f[6].strip() if len(f) >= 7 and re.fullmatch(r"[0-9a-fA-F]{6}", f[6].strip()) else None
+    return (mid, boss, floor, round(x, 4), round(y, 4), code.lower() if code else None), None
 
 
 def canonical(pin, dungeons):
-    mid, boss, floor, x, y = pin
-    return "NFDM|%d|%s|%s|%d|%.4f|%.4f" % (mid, dungeons[mid]["name"], boss, floor, x, y)
+    mid, boss, floor, x, y = pin[:5]
+    code = pin[5] if len(pin) > 5 else None
+    return "NFDM|%d|%s|%s|%d|%.4f|%.4f" % (mid, dungeons[mid]["name"], boss, floor, x, y) + ("|" + code if code else "")
 
 
 def consensus(subs, spread):
@@ -161,32 +167,42 @@ def main():
     a = ap.parse_args()
 
     dungeons = load_dungeons()
-    known = []
+    everything = []   # every valid line received, oldest first (a line sent again moves to the end: the latest wins)
     if os.path.exists(a.submissions):
-        known = [l.rstrip("\n") for l in open(a.submissions, encoding="utf-8") if l.startswith("NFDM|")]
-    seen = set(known)
+        everything = [l.rstrip("\n") for l in open(a.submissions, encoding="utf-8") if l.startswith("NFDM|")]
 
     texts = [open(f, encoding="utf-8").read() for f in a.files]
     if a.stdin:
         texts.append(sys.stdin.read())
-    added, skipped = [], []
+    added, resent, skipped = [], [], []
     for text in texts:
         for raw in text.splitlines():
             pin, why = parse_line(raw, dungeons)
             if pin:
                 line = canonical(pin, dungeons)
-                if line not in seen:
-                    seen.add(line)
+                if line in everything:
+                    everything.remove(line)
+                    resent.append(line)
+                else:
                     added.append(line)
+                everything.append(line)
             elif why:
                 skipped.append(why)
 
-    everything = known + added
-    by_boss = collections.defaultdict(list)
+    # one opinion per player per boss: the same contributor sending a boss again replaces their earlier pin
+    latest = collections.OrderedDict()
+    players = set()
     for line in everything:
         pin, _ = parse_line(line, dungeons)
         if pin:
-            by_boss[(pin[0], pin[1])].append((pin[2], pin[3], pin[4]))
+            if pin[5]:
+                players.add(pin[5])
+            who = pin[5] or line   # a line without a code is its own anonymous player
+            latest.pop((pin[0], pin[1], who), None)
+            latest[(pin[0], pin[1], who)] = (pin[2], pin[3], pin[4])
+    by_boss = collections.defaultdict(list)
+    for (mid, boss, _), sub in latest.items():
+        by_boss[(mid, boss)].append(sub)
 
     result, conflicts, singles, outliers = {}, [], [], []
     for (mid, boss), subs in sorted(by_boss.items()):
@@ -205,7 +221,7 @@ def main():
             singles.append((mid, boss))
         result.setdefault(mid, {})[boss] = (floor, x, y)
 
-    print("new lines: %d, already known: %d, skipped: %d" % (len(added), len(known), len(skipped)))
+    print("new lines: %d, sent again: %d, skipped: %d, players with a code: %d" % (len(added), len(resent), len(skipped), len(players)))
     for why in skipped:
         print("  skipped:", why)
     print("bosses with a pin: %d" % sum(len(v) for v in result.values()))
@@ -227,7 +243,7 @@ def main():
     os.makedirs(os.path.dirname(a.submissions), exist_ok=True)
     with open(a.submissions, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("# Every boss pin received, one line each (see tools/ingest_pins.py). Do not edit by hand.\n")
-        fh.write("\n".join(sorted(set(everything))) + ("\n" if everything else ""))
+        fh.write("\n".join(everything) + ("\n" if everything else ""))
     write_lua(a.out, result, dungeons)
     print("wrote", os.path.relpath(a.out, ROOT))
 
