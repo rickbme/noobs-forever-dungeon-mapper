@@ -133,7 +133,9 @@ map with **Undo**, **Remove pin** and **Done** buttons.
 - [ ] In Options, *Import guild pins* opens a box: paste the guild's block of `NFDM|...` lines, press *Import*, and the
       bosses it covers get pins (purple ring, "From the guild's shared pins" in the tooltip). Your own pins always win.
 - [ ] In Options, *Share my boss pins* shows your pins as text. Click inside it, press Ctrl+A, then Ctrl+C,
-      and paste it to us (for example in the Noobs Forever Discord).
+      and paste it in the Noobs Forever Discord's `#addon-data` channel. The window explains these three steps, and
+      says nothing is sent automatically. Is it clear? Placing a pin should print only one short line in chat, with the
+      longer explanation just the first time.
 
 ## 6. If something goes wrong
 

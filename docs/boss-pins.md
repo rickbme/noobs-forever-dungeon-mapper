@@ -8,7 +8,7 @@ how those pins get from a player's game into everyone's.
 
 1. **A player places pins** in the game (Options > *Help map the bosses*, or the card that asks when they enter a
    dungeon or defeat a boss with no pin), then Options > **Share my boss pins**, Ctrl+A, Ctrl+C.
-2. **They paste it in the guild's data channel** on Discord (suggested name: `#boss-pin-data`, guild members only).
+2. **They paste it in the guild's data channel** on Discord (`#addon-data`, open to everyone in the server).
    Each pin is one line: `NFDM|34|Stormwind Stockade|Hamhock|1|0.8000|0.4500`.
 3. **The maintainer merges them** with `tools/ingest_pins.py`: it checks every line, takes the position most players
    agree on (the median of the agreeing group), flags disagreements, and writes `Data/BossPlaces.lua`.

@@ -632,7 +632,13 @@ function ns.PlaceAt(x, y)
     local boss = d and placing and d.bosses[placing]
     if not (boss and view.floor) or x < 0 or x > 1 or y < 0 or y > 1 then return end
     ns.SetBossPlace(view.instanceID, boss, view.floor, x, y)
-    ns.Print(("%s: pin placed. Thank you! Use \"Share my boss pins\" in the options to send it in."):format(boss.name))
+    if ns.explainedSharing then
+        ns.Print(("%s: pin placed."):format(boss.name))
+    else
+        -- the first time only: how a pin gets to the guild (nothing is sent by itself)
+        ns.explainedSharing = true
+        ns.Print(("%s: pin placed. When you are done, Options > Share my boss pins lets you copy your pins and paste them in the guild's Discord. Nothing is sent automatically."):format(boss.name))
+    end
     placing = nil
     ns.Refresh()
 end

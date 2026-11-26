@@ -126,7 +126,7 @@ no pin, another offers to mark where you fought it. Say yes and just click the m
 Options > *Help map the bosses*: click a boss in the map's list, then click where it is on the map. Your pin
 appears at once and is saved. A toolbar over the map has **Undo**, **Remove pin** and **Done**; you can also drag
 a pin to move it, and right-click your own pin to remove it. *Share my boss pins* shows your pins as text to copy and send to us (for example
-in the Noobs Forever Discord), and we add them for everyone.
+in the Noobs Forever Discord's #addon-data channel), and we add them for everyone.
 
 ## How the data is made
 

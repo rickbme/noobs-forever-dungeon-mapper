@@ -261,3 +261,10 @@ Feedback from guild testers, and what was done:
   paste into Options > Import guild pins (guild-only layer: fills gaps, own pins win, removable) -> later, public release.
 - In the addon: exported lines now start with `NFDM|`; `Import guild pins` window; guild pins are stored in
   `guildPins`, shown with a purple ring.
+
+## Status 2026-11-25 (sharing explained plainly)
+
+- Decision: keep copy and paste as the way pins get from the game to the guild (`#addon-data`); no file reading or
+  in-game sync for now. The Share and Import windows now spell out three plain steps and say nothing is sent
+  automatically; placing a pin prints one short line, with the longer explanation only for the first pin of a session.
+  The ask cards are unchanged (short, once per dungeon / boss, with a Don't ask me again box).

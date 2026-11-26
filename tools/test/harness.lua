@@ -416,6 +416,24 @@ ns.HideMap()
 while ns.CanUndoBossPlace() do ns.UndoBossPlace() end
 ns.db.bossPlaces = {}
 
+realPrint("Placing a pin explains sharing once, briefly")
+ns.explainedSharing = nil
+ns.db.placer = true
+ns.ShowDungeon(389, 1)
+printed = {}
+ns.StartPlacing(1)
+ns.PlaceAt(0.3, 0.3)
+check(printed[1] and printed[1]:find("Share my boss pins", 1, true) and printed[1]:find("Nothing is sent automatically", 1, true), "the first pin explains how to share, and that nothing is sent by itself")
+printed = {}
+ns.StartPlacing(1)
+ns.PlaceAt(0.4, 0.4)
+check(printed[1] and printed[1]:find("pin placed.", 1, true) and not printed[1]:find("Share my boss pins", 1, true), "later pins just say a pin was placed")
+check(#printed == 1, "and print a single line")
+while ns.CanUndoBossPlace() do ns.UndoBossPlace() end
+ns.db.bossPlaces = {}
+ns.db.placer = false
+ns.HideMap()
+
 realPrint("The mouse wheel zooms the world map")
 ns.ShowWorldMap(947)
 local zw = NoobsForeverDungeonMapperWorld
