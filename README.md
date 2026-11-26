@@ -117,6 +117,10 @@ remakes with different layouts, so we place them by hand instead.
 
 ### Help map the bosses
 
+When you enter a dungeon whose bosses have no pin yet, a small card asks if you'd like to help (once per dungeon
+per session; it has a *Don't ask me again* box, and the same switch is in Options). After you defeat a boss that has
+no pin, another offers to mark where you fought it. Say yes and just click the map. Or turn it on yourself:
+
 Options > *Help map the bosses*: click a boss in the map's list, then click where it is on the map. Your pin
 appears at once and is saved. A toolbar over the map has **Undo**, **Remove pin** and **Done**; you can also drag
 a pin to move it, and right-click your own pin to remove it. *Share my boss pins* shows your pins as text to copy and send to us (for example

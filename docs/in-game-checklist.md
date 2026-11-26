@@ -112,6 +112,13 @@ select screen (this saves the file):
 
 ## 5. Placing boss pins (helps everyone)
 
+- [ ] **The ask cards:** entering a dungeon where some bosses have no pin (for example the Stockade) shows a small card at the
+      top of the screen, "Help map the bosses?", with *Yes, I'll help*, *Not now* and a *Don't ask me again* box. It
+      appears a few seconds after you arrive, not during combat, and only once per dungeon until you restart the game.
+      Does it ever get in the way? Does *Don't ask me again* stop it (and does the Options switch bring it back)?
+- [ ] **After a kill:** defeat a boss that has no pin. When the fight is over, a card says "You defeated X, and it has no
+      pin on the map yet" and *Yes* goes straight to "click the map where you fought it".
+
 Many bosses have no pin yet. In Options, tick *Help map the bosses*. A dark bar appears across the top of the
 map with **Undo**, **Remove pin** and **Done** buttons.
 

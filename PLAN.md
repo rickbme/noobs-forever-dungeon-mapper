@@ -240,3 +240,15 @@ Feedback from guild testers, and what was done:
   remove); pins can be dragged to move; right-click on your own pin removes it; kills can't be toggled while mapping
   (normal mode is unchanged). Your own pins have a blue ring and "Placed by you" in the tooltip. Untested in game: the
   drag (cursor maths is the same as placing).
+
+## Status 2026-11-25 (asking players to map bosses)
+
+- Two cards (one frame, `NoobsForeverDungeonMapperAsk`): on entering a dungeon with unpinned bosses ("Help map the
+  bosses?", 4 s after arriving, once per dungeon per session, not in combat or over the welcome window), and after
+  defeating a boss that has no pin ("click the map where you fought it", waits for combat to end, once per boss per
+  session). Yes turns mapmaker mode on (and, after a kill, starts placing that boss). A "Don't ask me again" box and an
+  Options switch (`askToMap`, default on) control both.
+- Auto-placing the pin where the kill happened isn't possible with what we know: inside instances the game hides the
+  player's position (`/fd probe` will confirm), and a sub-zone gives only an area (only the Hall of Thanes has anchors).
+  If the probe shows `UnitPosition` works in a dungeon, a precise auto-pin becomes possible (world position -> floor
+  needs each floor's UiMapAssignment bounds; not in our data yet).

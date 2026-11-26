@@ -46,6 +46,9 @@ local SETTINGS = {
 }
 
 local TESTER_SETTINGS = {
+    { label = "Ask me to help map the bosses when I enter a dungeon",
+      tip = "A small card asks once per dungeon (per session) when some of its bosses have no pin on the map yet.",
+      get = DB("askToMap", true), set = function(v) ns.db.askToMap = v end },
     { label = "Help map the bosses (place pins on the map)",
       tip = "Click a boss in the map's list, then click where it is on the map. Great for bosses that have no pin yet.",
       get = DB("placer", false), set = function(v) ns.db.placer = v; ns.CancelPlacing(); ns.Refresh() end },
@@ -174,7 +177,7 @@ local STEPPERS = {
 
 -- The settings that are plain on/off or numbers (not the run data, floors or placed pins).
 local OPTION_KEYS = { "autoOpen", "autoClose", "followProgress", "scale", "opacity", "liveView", "liveScale",
-    "minimapButton", "worldFirst", "route", "placer", "probeLog", "panel", "moveFade", "moveOpacity" }
+    "minimapButton", "worldFirst", "route", "placer", "probeLog", "panel", "moveFade", "moveOpacity", "askToMap" }
 
 local function ResetOptions()
     for _, k in ipairs(OPTION_KEYS) do
@@ -390,6 +393,122 @@ end
 -- Called when the player enters the world; only the first time ever.
 function ns.MaybeShowWelcome()
     if ns.db and not ns.db.welcomed and not ns.CurrentInstance() then ns.ShowWelcome() end
+end
+
+-------------------------------------------------------------------------------
+-- "Help map the bosses?" card
+-------------------------------------------------------------------------------
+
+local ask
+ns.askedToMap = {} -- [instanceID] = true: already asked about this dungeon since the game started (or "Not now")
+
+local function Unpinned(instanceID)
+    local d = ns.Dungeons[instanceID]
+    if not (d and #d.floors > 0) then return 0, 0 end
+    local missing = 0
+    for _, b in ipairs(d.bosses) do if not b.x then missing = missing + 1 end end
+    return missing, #d.bosses
+end
+
+local function CreateAsk()
+    ask = CreateFrame("Frame", "NoobsForeverDungeonMapperAsk", UIParent, "BackdropTemplate")
+    ask:SetSize(400, 250)
+    ask:SetPoint("TOP", UIParent, "TOP", 0, -110)
+    ask:SetFrameStrata("DIALOG")
+    ask:SetToplevel(true)
+    ask:EnableMouse(true)
+    Backdrop(ask)
+    tinsert(UISpecialFrames, "NoobsForeverDungeonMapperAsk") -- Escape is "Not now"
+
+    local title = ask:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOP", 0, -18)
+    title:SetText("Help map the bosses?")
+    ask.text = ask:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    ask.text:SetPoint("TOPLEFT", 24, -50)
+    ask.text:SetWidth(352)
+    ask.text:SetJustifyH("LEFT")
+
+    ask.check = Check(ask, {
+        label = "Don't ask me again",
+        get = function() return ns.db.askToMap == false end,
+        set = function(v) ns.db.askToMap = not v end,
+    }, 22, -158)
+    ask.check.text:SetWidth(250)
+
+    local yes = Button(ask, "Yes, I'll help", 130)
+    yes:SetPoint("BOTTOMLEFT", 24, 18)
+    yes:SetScript("OnClick", function()
+        ns.db.placer = true
+        ask:Hide()
+        ns.CancelPlacing()
+        ns.OptionsRefresh()
+        if ask.bossIndex then
+            ns.StartPlacing(ask.bossIndex) -- after a kill: straight to "click where it was"
+            ns.Print("Click the map where you fought it. Pins you place are saved; share them from Options.")
+        else
+            ns.Print("Mapmaker mode is on. Click a boss in the list, then click where it is on the map.")
+        end
+    end)
+    local later = Button(ask, "Not now", 100)
+    later:SetPoint("BOTTOMRIGHT", -24, 18)
+    later:SetScript("OnClick", function() ask:Hide() end)
+    ask.yes, ask.later = yes, later
+    ask:Hide()
+end
+
+-- Offers mapmaker mode, once per dungeon per session, when the player is looking at a dungeon whose bosses
+-- have no pin yet. Never while mapmaker mode is already on, in combat, or over the welcome window.
+function ns.MaybeAskToMap(instanceID)
+    if ns.db.askToMap == false or ns.db.placer or ns.askedToMap[instanceID] then return end
+    if InCombatLockdown() or (welcome and welcome:IsShown()) then return end
+    if ns.ViewedInstance() ~= instanceID or not ns.DungeonMapShown() then return end
+    local missing, total = Unpinned(instanceID)
+    if missing == 0 then return end
+    ns.askedToMap[instanceID] = true
+    if not ask then CreateAsk() end
+    ask.bossIndex = nil
+    ask.text:SetText(("%d of the %d bosses in %s have no pin on the map yet.\n\nYou can help fix that. If you say yes, click a boss in the list and then click where it is on the map. Your pins are saved, and you can share them from Options.\n\nYou can change this any time in Options."):format(
+        missing, total, ns.Dungeons[instanceID].name))
+    ns.OptionsRefresh()
+    ask:Show()
+end
+
+-- A boss that has no pin was just defeated: the player knows where it was, so offer to place it now. Waits
+-- for the fight to be over, asks once per boss per session, and never when asking is turned off.
+local pendingKill
+function ns.TryOfferMapKill()
+    local p = pendingKill
+    if not p then return end
+    if ns.db.askToMap == false or ns.db.placer or p.boss.x then pendingKill = nil return end
+    if InCombatLockdown() then return end -- called again when combat ends
+    pendingKill = nil
+    local key = p.id .. ":" .. p.boss.name
+    if ns.askedToMap[key] or (welcome and welcome:IsShown()) then return end
+    if ns.ViewedInstance() ~= p.id or not ns.DungeonMapShown() then return end
+    local d = ns.Dungeons[p.id]
+    local index
+    for i, b in ipairs(d.bosses) do if b == p.boss then index = i end end
+    if not index then return end
+    ns.askedToMap[key] = true
+    if not ask then CreateAsk() end
+    ask.bossIndex = index
+    ask.text:SetText(("You defeated %s, and it has no pin on the map yet.\n\nIf you say yes, click on the map where you fought it. Your pin is saved, and you can share it from Options so the whole guild gets it.\n\nYou can change this any time in Options."):format(p.boss.name))
+    ns.OptionsRefresh()
+    ask:Show()
+end
+
+function ns.OfferMapKill(instanceID, boss)
+    if boss.x then return end
+    pendingKill = { id = instanceID, boss = boss }
+    ns.TryOfferMapKill()
+end
+
+function ns.AskToMapLater(instanceID)
+    if C_Timer and C_Timer.After then
+        C_Timer.After(4, function() ns.MaybeAskToMap(instanceID) end) -- after the loading screen has settled
+    else
+        ns.MaybeAskToMap(instanceID)
+    end
 end
 
 -------------------------------------------------------------------------------

@@ -25,6 +25,7 @@ ns.DEFAULTS = {
     panel = "bosses",     -- what the right-hand panel of the dungeon window shows: bosses or quests
     route = true,         -- draw the boss order as lines on the dungeon map
     worldFirst = true,    -- outside a dungeon, the map button opens the world map where you are
+    askToMap = true,      -- ask to turn on mapmaker mode when entering a dungeon with unpinned bosses
     placer = false,       -- mapmaker mode: click a boss, then the map, to place its pin
     bossPlaces = {},      -- [instanceID] = { [boss name] = { floor, x, y } } placed by this player
     welcomed = false,     -- the first-run popup has been shown
@@ -247,6 +248,7 @@ local function OnEnterWorld()
             run.last = time()
             ns.SyncKillsFromGame(id)
             if ns.db.autoOpen then ns.ShowDungeon(id, ns.GuessFloor(id)) end
+            ns.AskToMapLater(id)
         elseif left and ns.db.autoClose then
             ns.HideMap()
         end
@@ -286,6 +288,7 @@ local function OnEncounterEnd(encounterID, name, success)
         run.last = time()
         local killed, total = ns.KillCount(inDungeon)
         Print(("%s defeated (%d/%d)."):format(b.name, killed, total))
+        pcall(ns.OfferMapKill, inDungeon, b) -- a boss with no pin: offer to mark where it was
     end
     pcall(ns.SetFighting, nil)
     if not (won and b) then return end
@@ -357,6 +360,7 @@ frame:SetScript("OnEvent", function(self, event, ...)
         ns.QuestsChanged()
     elseif event == "PLAYER_REGEN_ENABLED" then
         ns.LiveView_Update()
+        ns.TryOfferMapKill()
     end
 end)
 

@@ -793,6 +793,101 @@ local sc = skullPin.dot.coords
 check(sc and sc[1] == 0.75 and sc[2] == 1 and sc[3] == 0.25 and sc[4] == 0.5, "and its skull (row 2, column 4)")
 ns.HideMap()
 
+realPrint("The Help map the bosses card")
+local function Enter(id, name) game.inInstance, game.instanceType, game.instanceID, game.instanceName = true, "party", id, name; Fire("PLAYER_ENTERING_WORLD") end
+local function Leave() game.inInstance, game.instanceType, game.instanceID, game.instanceName = false, "none", nil, nil; Fire("PLAYER_ENTERING_WORLD") end
+check(ns.DEFAULTS.askToMap == true, "asking is on by default")
+ns.db.welcomed = true
+if NoobsForeverDungeonMapperWelcome then NoobsForeverDungeonMapperWelcome:Hide() end
+ns.askedToMap = {}
+ns.db.askToMap, ns.db.placer = true, false
+Enter(34, "Stormwind Stockade")
+local askf = NoobsForeverDungeonMapperAsk
+check(askf and askf:IsShown(), "entering a dungeon with unpinned bosses shows the card")
+check(askf.text:GetText():find("5 of the 5 bosses in Stormwind Stockade have no pin", 1, true), "it says how many bosses have no pin")
+askf.later.scripts.OnClick()
+check(not askf:IsShown() and ns.db.placer == false, "Not now closes it and changes nothing")
+Leave(); Enter(34, "Stormwind Stockade")
+check(not askf:IsShown(), "it does not ask about the same dungeon again this session")
+Leave(); ns.askedToMap = {}
+Enter(34, "Stormwind Stockade")
+askf.check.scripts.OnClick(askf.check)
+check(ns.db.askToMap == false, "the Don't ask me again box turns asking off")
+askf:Hide()
+Leave(); Enter(389, "Ragefire Chasm")
+check(not askf:IsShown(), "and it stays quiet in other dungeons")
+Leave(); ns.askedToMap = {}
+ns.db.askToMap = true
+Enter(389, "Ragefire Chasm")
+check(askf:IsShown(), "turning asking back on in Options brings it back")
+askf.yes.scripts.OnClick()
+check(ns.db.placer == true and not askf:IsShown() and NoobsForeverDungeonMapperFrame.mapper:IsShown(), "Yes turns mapmaker mode on and shows the toolbar")
+Leave(); ns.askedToMap = {}
+Enter(34, "Stormwind Stockade")
+check(not askf:IsShown(), "it does not ask while mapmaker mode is already on")
+ns.db.placer = false
+Leave(); ns.askedToMap = {}
+for _, b in ipairs(ns.Dungeons[389].bosses) do b.floor, b.x, b.y = 1, 0.5, 0.5 end
+Enter(389, "Ragefire Chasm")
+check(not askf:IsShown(), "it does not ask when every boss has a pin")
+for _, b in ipairs(ns.Dungeons[389].bosses) do b.floor, b.x, b.y = nil, nil, nil end
+Leave(); ns.askedToMap = {}
+game.combat = true
+Enter(34, "Stormwind Stockade")
+check(not askf:IsShown(), "it does not interrupt combat")
+game.combat = false
+Leave(); ns.askedToMap = {}
+ns.ShowWelcome(true)
+Enter(34, "Stormwind Stockade")
+check(not askf:IsShown(), "it waits while the welcome window is showing")
+NoobsForeverDungeonMapperWelcome:Hide()
+Leave(); ns.askedToMap = {}
+ns.db.placer = false
+ns.HideMap()
+
+realPrint("After a kill, offer to mark where the boss was")
+local function Reset2() Leave(); ns.askedToMap = {}; ns.db.placer, ns.db.askToMap = false, true; askf:Hide(); ns.CancelPlacing() end
+Reset2()
+Enter(34, "Stormwind Stockade")
+askf:Hide()
+local stBoss = ns.Dungeons[34].bosses[1]
+ns.ResetRun(34)
+Fire("ENCOUNTER_END", stBoss.id, stBoss.name, 1, 5, 1)
+check(askf:IsShown() and askf.text:GetText():find("You defeated Targorr the Dread, and it has no pin", 1, true), "defeating a boss with no pin offers to mark where it was")
+askf.yes.scripts.OnClick()
+check(ns.db.placer == true and NoobsForeverDungeonMapperFrame.placeStatus:GetText():find("Placing Targorr the Dread", 1, true), "Yes goes straight to placing that boss's pin")
+Reset2()
+Enter(34, "Stormwind Stockade")
+askf:Hide()
+ns.ResetRun(34)
+game.combat = true
+Fire("ENCOUNTER_END", stBoss.id, stBoss.name, 1, 5, 1)
+check(not askf:IsShown(), "it waits while still in combat")
+game.combat = false
+Fire("PLAYER_REGEN_ENABLED")
+check(askf:IsShown(), "and asks once combat ends")
+askf:Hide()
+ns.ResetRun(34)
+Fire("ENCOUNTER_END", stBoss.id, stBoss.name, 1, 5, 1)
+check(not askf:IsShown(), "it asks only once per boss")
+Reset2()
+Enter(34, "Stormwind Stockade")
+askf:Hide()
+ns.ResetRun(34)
+stBoss.floor, stBoss.x, stBoss.y = 1, 0.5, 0.5
+Fire("ENCOUNTER_END", stBoss.id, stBoss.name, 1, 5, 1)
+check(not askf:IsShown(), "it does not ask about a boss that already has a pin")
+stBoss.floor, stBoss.x, stBoss.y = nil, nil, nil
+ns.db.askToMap = false
+ns.askedToMap = {}
+ns.ResetRun(34)
+Fire("ENCOUNTER_END", stBoss.id, stBoss.name, 1, 5, 1)
+check(not askf:IsShown(), "and not when asking is turned off")
+ns.db.askToMap = true
+ns.ResetRun(34)
+Reset2()
+ns.HideMap()
+
 realPrint("Boss pins from OpenMap and the placer")
 local pinned = 0
 for _, b in ipairs(ns.Dungeons[36].bosses) do if b.x then pinned = pinned + 1 end end
