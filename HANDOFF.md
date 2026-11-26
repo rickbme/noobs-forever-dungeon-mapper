@@ -11,7 +11,7 @@ dungeon's map when you enter a dungeon, with a floor picker, boss pins, a boss l
 no slash commands are needed (`/fd` still works as a shortcut).
 
 - Repo: https://github.com/rickbme/noobs-forever-dungeon-mapper (only branch: `main`)
-- Version: `0.2.5-beta` (in the `.toc`). Releases: v0.1.0-beta to v0.2.5-beta (GitHub pre-releases).
+- Version: `0.2.6-beta` (in the `.toc`). Releases: v0.1.0-beta to v0.2.6-beta (GitHub pre-releases).
 - Modelled on [OpenMap](https://github.com/openmap-world/openmap) (MIT); see [CREDITS.md](CREDITS.md).
 - Maps of the new dungeons are by Santiago Reyes, used under his announcement's terms (non-commercial, keep
   watermark and credit). A thank-you and permission request was written; it may or may not have been sent.
