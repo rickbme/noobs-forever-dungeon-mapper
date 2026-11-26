@@ -104,6 +104,11 @@ files, the game install. See [docs/development.md](docs/development.md).
 - Never push a tag or publish a release without the maintainer's go-ahead for that release.
 - Say plainly what has not been checked in game.
 
+## Guild feedback to follow up (2026-11-25)
+
+See the table at the end of PLAN.md: kill display needs a real run (`encounterLog` in the saved variables),
+the greyed-out map needs a screenshot, quest locations need a data source.
+
 ## To do next (in order)
 
 1. **In-game pass** with [docs/in-game-checklist.md](docs/in-game-checklist.md); fix what breaks and add each bug to

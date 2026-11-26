@@ -19,6 +19,7 @@ ns.DEFAULTS = {
     minimapAngle = 200,   -- its position around the minimap, in degrees
     floors = {},          -- [instanceID] = last floor viewed
     runs = {},            -- [instanceID] = { killed = { [key] = true }, last = time() }
+    route = true,         -- draw the boss order as lines on the dungeon map
     worldFirst = true,    -- outside a dungeon, the map button opens the world map where you are
     placer = false,       -- mapmaker mode: click a boss, then the map, to place its pin
     bossPlaces = {},      -- [instanceID] = { [boss name] = { floor, x, y } } placed by this player
@@ -40,6 +41,21 @@ local function Safe(v)
     return v
 end
 ns.Safe = Safe
+
+-- The colour (as |cAARRGGBB text) the game uses for something of this level for the player: red is too
+-- hard, then orange, yellow, green and grey for trivial. Uses the middle of a dungeon's level range.
+function ns.DifficultyColor(minLevel, maxLevel)
+    if not (GetQuestDifficultyColor and minLevel and maxLevel) then return "|cffffffff" end
+    local ok, c = pcall(GetQuestDifficultyColor, math.floor((minLevel + maxLevel) / 2))
+    if not (ok and type(c) == "table" and c.r and c.g and c.b) then return "|cffffffff" end
+    return ("|cff%02x%02x%02x"):format(math.floor(c.r * 255 + 0.5), math.floor(c.g * 255 + 0.5), math.floor(c.b * 255 + 0.5))
+end
+
+-- "13-20" (or "60") in the colour for the player's level.
+function ns.LevelsColored(minLevel, maxLevel)
+    local text = minLevel == maxLevel and tostring(minLevel) or (minLevel .. "-" .. maxLevel)
+    return ns.DifficultyColor(minLevel, maxLevel) .. text .. "|r"
+end
 
 function ns.Norm(name)
     name = Safe(name)
@@ -95,6 +111,35 @@ function ns.KillCount(instanceID)
         if ns.IsKilled(instanceID, b) then n = n + 1 end
     end
     return n, #d.bosses
+end
+
+-- Reads the game's own record of which bosses are down in the dungeon the player is in (the
+-- dungeon finder's progress list) and marks any we missed. It only ever adds kills, so a game
+-- that answers differently than expected cannot wipe a run. Does nothing where the API is absent.
+function ns.SyncKillsFromGame(instanceID)
+    if not (GetLFGDungeonNumEncounters and GetLFGDungeonEncounterInfo and ns.Dungeons[instanceID]) then return end
+    local lfgID = Safe(select(10, GetInstanceInfo()))
+    if type(lfgID) ~= "number" or lfgID == 0 then return end
+    local ok, n = pcall(GetLFGDungeonNumEncounters, lfgID)
+    n = ok and Safe(n) or nil
+    if type(n) ~= "number" then return end
+    local d, changed = ns.Dungeons[instanceID], false
+    for i = 1, n do
+        local ok2, name, _, isKilled = pcall(GetLFGDungeonEncounterInfo, lfgID, i)
+        name, isKilled = Safe(name), Safe(isKilled)
+        local key = ok2 and isKilled and type(name) == "string" and ns.Norm(name)
+        if key then
+            for _, b in ipairs(d.bosses) do
+                if ns.Norm(b.name) == key and not ns.IsKilled(instanceID, b) then
+                    local run = Run(instanceID, true)
+                    run.killed[BossKey(b)] = true
+                    run.last = time()
+                    changed = true
+                end
+            end
+        end
+    end
+    if changed then pcall(ns.Refresh) end
 end
 
 -- The first boss (in the game's own encounter order) not yet killed.
@@ -196,6 +241,7 @@ local function OnEnterWorld()
         if id then
             local run = Run(id, true)
             run.last = time()
+            ns.SyncKillsFromGame(id)
             if ns.db.autoOpen then ns.ShowDungeon(id, ns.GuessFloor(id)) end
         elseif left and ns.db.autoClose then
             ns.HideMap()
@@ -217,25 +263,36 @@ end
 local function OnEncounterStart(encounterID, name)
     if not inDungeon then return end
     local b = FindBoss(inDungeon, encounterID, name)
-    if b and b.floor then ns.ShowFloorIfViewing(inDungeon, b.floor) end
-    ns.SetFighting(b)
+    ns.RecordEncounter("start", encounterID, name, nil, b)
+    -- the drawing is protected: an error in it must never stop the addon tracking what happened
+    if b and b.floor then pcall(ns.ShowFloorIfViewing, inDungeon, b.floor) end
+    pcall(ns.SetFighting, b)
 end
 
 local function OnEncounterEnd(encounterID, name, success)
-    ns.SetFighting(nil)
-    if not inDungeon then return end
+    if not inDungeon then return pcall(ns.SetFighting, nil) end
     success = Safe(success)
-    if not (success == 1 or success == true) then return ns.Refresh() end
     local b = FindBoss(inDungeon, encounterID, name)
-    if not b then return ns.Refresh() end
-    if not ns.IsKilled(inDungeon, b) then
-        ns.SetKilled(inDungeon, b, true)
+    ns.RecordEncounter("end", encounterID, name, success, b)
+    local won = success == 1 or success == true
+    if won and b and not ns.IsKilled(inDungeon, b) then
+        -- record the kill first, then redraw
+        local run = Run(inDungeon, true)
+        run.killed[BossKey(b)] = true
+        run.last = time()
         local killed, total = ns.KillCount(inDungeon)
         Print(("%s defeated (%d/%d)."):format(b.name, killed, total))
     end
+    pcall(ns.SetFighting, nil)
+    if not (won and b) then return end
     if ns.db.followProgress then
         local nextBoss = ns.NextBoss(inDungeon)
-        if nextBoss and nextBoss.floor then ns.ShowFloorIfViewing(inDungeon, nextBoss.floor) end
+        if nextBoss and nextBoss.floor then pcall(ns.ShowFloorIfViewing, inDungeon, nextBoss.floor) end
+    end
+    -- the game's own record of the kills can lag a moment behind the event: ask again shortly
+    if C_Timer and C_Timer.After then
+        local id = inDungeon
+        C_Timer.After(2, function() if inDungeon == id then ns.SyncKillsFromGame(id) end end)
     end
 end
 

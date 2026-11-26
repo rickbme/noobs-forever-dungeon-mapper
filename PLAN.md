@@ -133,3 +133,15 @@ This is the riskiest gap: the addon has never run in the live game.
   Option "Outside dungeons, open the world map where I am" (default on) turns it off. Inside a dungeon the button
   still opens the dungeon map; clicking an entrance on the world map opens that dungeon's map (already built).
 - Unverified in game: that the game answers `GetBestMapForUnit` / `GetPlayerMapPosition` for continent IDs on Forever.
+
+## Status 2026-11-25 (guild feedback, first round)
+
+Feedback from guild testers, and what was done:
+
+| Item | Status |
+|---|---|
+| Colour dungeon levels by difficulty for the character's level | **Done**: `ns.DifficultyColor` uses the game's quest-difficulty colours on the middle of the range; in the dungeon menu, window title and world-map tooltips. |
+| Bug: killed bosses show on entering but not live during a run | **Hardened, root cause not confirmed.** The kill is now recorded before any drawing, and the drawing is protected (an error there used to be able to abort the handler before the kill was saved). The game's own boss progress (dungeon finder API, `GetLFGDungeonEncounterInfo`) is read on entering, on opening the map and 2 s after a kill, and only ever adds kills. Every boss event is logged (`encounterLog`, last 40) and `/fd probe` prints the game's progress. Needs a real run to confirm which path was failing. |
+| Path/route through a dungeon | **v1 done**: lines join the bosses in order on each floor (option). They are straight lines (order, not walking path); a real path needs hand-placed waypoints, which the placer could be extended to collect. "Next boss" now says which floor it is on. |
+| Bug: parts of the map greyed out when viewing outside the dungeon | **Not reproduced.** No desaturation or dimming exists in the code outside a dungeon. Needs a screenshot, the dungeon's name and the game language. Candidates: killed bosses shown grey from an old run, the "viewing only" text, or missing tiles on non-English clients (see the green-squares note). |
+| Quest locations inside dungeons | **Research needed.** Questie has no in-dungeon positions. Possible source: the game's `QuestPOIBlob`/`QuestPOIPoint` tables (positions on UiMaps, which the dungeon floors already use) plus quest names, and the quest log API for state. Not started. |

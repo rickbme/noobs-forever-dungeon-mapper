@@ -26,6 +26,10 @@ Work in progress (beta): it has not been tested in the live game yet.
   entrance is marked on it. In a dungeon, use the **World map** button (or the minimap button's right-click menu,
   or `/fd world`) to zoom out to Azeroth or either continent. Hover an entrance for levels and
   boss progress, click it to open that dungeon's map. The map art is the game's own, drawn from the client.
+- **Difficulty colours**: dungeon levels are coloured like the game's quests, for your level (red too hard,
+  orange, yellow about right, green easy, grey trivial).
+- **Boss route**: lines join the bosses in order on each floor so you know where to go next (an option turns
+  them off). They show the order, not the exact path to walk.
 - **No typing needed**: everything has a button. The map window has **Options** and **Dungeons**
   buttons, the minimap button's right-click menu lists every dungeon plus Options, and a short welcome
   popup explains the basics the first time you play. There is also an entry in the game's

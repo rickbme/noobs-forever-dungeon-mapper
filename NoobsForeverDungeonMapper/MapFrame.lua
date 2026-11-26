@@ -22,6 +22,7 @@ local f -- the window
 local view = { instanceID = nil, floor = nil }
 local fighting -- boss being fought, if any
 local pins, rows = {}, {}
+local routeLines = {} -- lines joining the bosses in order
 local placing -- index of the boss whose pin is being placed (mapmaker mode)
 
 -------------------------------------------------------------------------------
@@ -156,6 +157,7 @@ local function Create()
     f.canvas:SetSize(MAP_W, MAP_H)
     f.canvas:SetPoint("TOPLEFT", PAD, -PAD - 30)
     f.canvas:SetClipsChildren(true)
+    f.routeLines = routeLines -- (the offline tests look at them)
     f.canvas:SetScript("OnMouseUp", function(self, button)
         if not placing then return end
         if button == "RightButton" then return ns.CancelPlacing() end
@@ -324,6 +326,34 @@ function ns.ShowBossTooltip(owner, boss, index)
     GameTooltip:Show()
 end
 
+-- The order to take the bosses in: a line from each boss's pin to the next one's, on this floor. They
+-- are straight lines (the order, not the walking path), grey once the boss they leave from is down.
+local function DrawRoute(d)
+    for _, l in ipairs(routeLines) do l:Hide() end
+    if ns.db.route == false or not view.floor or not f.canvas.CreateLine then return end
+    local n = 0
+    for i = 1, #d.bosses - 1 do
+        local a, b = d.bosses[i], d.bosses[i + 1]
+        if a.x and b.x and a.floor == view.floor and b.floor == view.floor then
+            n = n + 1
+            local line = routeLines[n]
+            if not line then
+                line = f.canvas:CreateLine(nil, "ARTWORK")
+                line:SetThickness(3)
+                routeLines[n] = line
+            end
+            if ns.IsKilled(view.instanceID, a) then
+                line:SetColorTexture(0.55, 0.55, 0.55, 0.45)
+            else
+                line:SetColorTexture(1, 0.82, 0.1, 0.75)
+            end
+            line:SetStartPoint("TOPLEFT", f.canvas, a.x * MAP_W, -a.y * MAP_H)
+            line:SetEndPoint("TOPLEFT", f.canvas, b.x * MAP_W, -b.y * MAP_H)
+            line:Show()
+        end
+    end
+end
+
 local function DrawPins(d)
     for _, p in ipairs(pins) do p:Hide(); p.pulse:Stop() end
     if not d.floors[view.floor] then return end
@@ -386,7 +416,10 @@ function ns.Refresh()
 
     local killed, total = ns.KillCount(view.instanceID)
     f.title:SetText(d.name)
-    local tag = d.raid and "Raid" or "Level " .. d.levels
+    local lo, hi = tostring(d.levels):match("^(%d+)%-(%d+)$")
+    if not lo then lo = tostring(d.levels):match("^(%d+)$"); hi = lo end
+    local levels = lo and ns.LevelsColored(tonumber(lo), tonumber(hi)) or tostring(d.levels)
+    local tag = (d.raid and "Raid " or "Level ") .. levels
     f.subtitle:SetText(("%s   |cffffd100%d/%d bosses|r%s"):format(tag, killed, total, d.new and "   |cff20ff20New in Forever|r" or ""))
 
     f.prev:SetShown(#d.floors > 1)
@@ -400,6 +433,7 @@ function ns.Refresh()
     f.next:SetEnabled(view.floor ~= nil and view.floor < #d.floors)
     f.live:SetText(ns.db.liveView and "Live: on" or "Live view")
 
+    DrawRoute(d)
     DrawPins(d)
     DrawList(d)
     ns.UpdateLocationText()
@@ -480,7 +514,12 @@ function ns.UpdateLocationText()
     if fighting then
         parts[#parts + 1] = "Fighting: |cffff4040" .. fighting.name .. "|r"
     elseif nextBoss then
-        parts[#parts + 1] = ("Next boss: |cffffd100%d. %s|r"):format(i, nextBoss.name)
+        local where = ""
+        local d = ns.Dungeons[view.instanceID]
+        if nextBoss.floor and view.floor and nextBoss.floor ~= view.floor and d.floors[nextBoss.floor] then
+            where = " (on " .. d.floors[nextBoss.floor].name .. ")"
+        end
+        parts[#parts + 1] = ("Next boss: |cffffd100%d. %s%s|r"):format(i, nextBoss.name, where)
     else
         parts[#parts + 1] = "|cff20ff20All bosses defeated|r"
     end
@@ -492,6 +531,7 @@ end
 -------------------------------------------------------------------------------
 
 function ns.ShowDungeon(instanceID, floor)
+    if ns.CurrentInstance() == instanceID then ns.SyncKillsFromGame(instanceID) end
     if not f then Create() end
     local d = ns.Dungeons[instanceID]
     if not d then return end
@@ -567,14 +607,16 @@ function ns.ShowDungeonMenu(owner)
         return
     end
     MenuUtil.CreateContextMenu(owner or UIParent, function(_, root)
-        root:CreateTitle("Dungeons")
+        root:CreateTitle("Dungeons (colours show the difficulty for your level)")
         local raids = {}
         for _, id in ipairs(ns.DungeonOrder) do
             local d = ns.Dungeons[id]
             if d.raid then
                 raids[#raids + 1] = id
             else
-                local label = ("%s |cff808080(%s)|r%s"):format(d.name, d.levels, d.new and " |cff20ff20new|r" or "")
+                local lo, hi = tostring(d.levels):match("^(%d+)%-(%d+)$")
+                local levels = lo and ns.LevelsColored(tonumber(lo), tonumber(hi)) or tostring(d.levels)
+                local label = ("%s (%s)%s"):format(d.name, levels, d.new and " |cff20ff20new|r" or "")
                 root:CreateButton(label, function() ns.ShowDungeon(id) end)
             end
         end

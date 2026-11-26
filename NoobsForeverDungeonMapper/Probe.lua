@@ -50,7 +50,28 @@ local CHECKS = {
     { "GetRealZoneText", function() return GetRealZoneText() end },
     { "GetSubZoneText", function() return GetSubZoneText() end },
     { "GetMinimapZoneText", function() return GetMinimapZoneText() end },
+    { "GetInstanceInfo (dungeon finder ID)", function() return select(10, GetInstanceInfo()) end },
+    { "GetLFGDungeonNumEncounters", function()
+        local id = select(10, GetInstanceInfo())
+        if not (id and GetLFGDungeonNumEncounters) then return nil end
+        return GetLFGDungeonNumEncounters(id)
+    end },
 }
+
+-- The game's boss progress for the dungeon we are in: "Name = down" or "up", or nil if it isn't available.
+local function BossProgress()
+    if not (GetLFGDungeonNumEncounters and GetLFGDungeonEncounterInfo) then return nil end
+    local id = ns.Safe(select(10, GetInstanceInfo()))
+    if type(id) ~= "number" or id == 0 then return nil end
+    local ok, n = pcall(GetLFGDungeonNumEncounters, id)
+    if not (ok and type(ns.Safe(n)) == "number") then return nil end
+    local parts = {}
+    for i = 1, n do
+        local ok2, name, _, killed = pcall(GetLFGDungeonEncounterInfo, id, i)
+        parts[#parts + 1] = ("%s = %s"):format(tostring(ok2 and ns.Safe(name) or "?"), (ok2 and ns.Safe(killed)) and "down" or "up")
+    end
+    return table.concat(parts, "; ")
+end
 
 local function Pack(...) return { n = select("#", ...), ... } end
 
@@ -96,8 +117,10 @@ function ns.Probe(arg)
         for _, r in ipairs(results) do ns.Print("  " .. r[1] .. " = " .. r[2]) end
         ns.Print(any and "|cff20ff20A position API answered with numbers.|r"
             or "|cffffd100No position API gave a number: only sub-zone anchors are possible here.|r")
+        local progress = BossProgress()
+        ns.Print("  Boss progress from the game: " .. (progress or "not available"))
         local store = Store()
-        store.last = { t = time(), instance = ns.Safe(instanceID), anyPosition = any, results = {} }
+        store.last = { t = time(), instance = ns.Safe(instanceID), anyPosition = any, results = {}, bossProgress = progress }
         for _, r in ipairs(results) do store.last.results[r[1]] = r[2] end
     end
 end
@@ -117,4 +140,18 @@ function ns.RecordSubzone(instanceID)
         }
         while #log > MAX_LOG do table.remove(log, 1) end
     end
+end
+
+-- Every boss fight event as the game sent it (kept always, last 40): what the id, name and result
+-- were, whether they were secret values, and which boss we matched. Read it from the saved variables
+-- when a kill goes missing.
+local MAX_ENCOUNTERS = 40
+function ns.RecordEncounter(kind, id, name, success, boss)
+    ns.db.encounterLog = ns.db.encounterLog or {}
+    local log = ns.db.encounterLog
+    log[#log + 1] = {
+        t = time(), kind = kind, id = Describe(id), name = Describe(name), success = Describe(success),
+        matched = boss and boss.name or "NO MATCH", instance = ns.Safe(select(8, GetInstanceInfo())),
+    }
+    while #log > MAX_ENCOUNTERS do table.remove(log, 1) end
 end

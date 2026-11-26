@@ -94,8 +94,7 @@ local function UpdateMarker()
 end
 
 local function LevelText(inst)
-    if inst[4] == inst[5] then return tostring(inst[4]) end
-    return inst[4] .. "-" .. inst[5]
+    return ns.LevelsColored(inst[4], inst[5])
 end
 
 local function PinTooltip(self)

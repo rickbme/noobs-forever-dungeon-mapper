@@ -26,6 +26,9 @@ local SETTINGS = {
     { label = "Outside dungeons, open the world map where I am",
       tip = "The map button then shows the world map. Click a dungeon icon on it to open that dungeon's map. Turn off to get the last dungeon's map instead.",
       get = DB("worldFirst", true), set = function(v) ns.db.worldFirst = v end },
+    { label = "Show the boss order as lines on the map",
+      tip = "Lines join the bosses in the order the game lists them, to help you find your way. They show the order, not the exact path to walk.",
+      get = DB("route", true), set = function(v) ns.db.route = v; ns.Refresh() end },
     { label = "Close the map when I leave the dungeon",
       get = DB("autoClose", true), set = function(v) ns.db.autoClose = v end },
     { label = "Turn to the next boss's floor after a kill",
@@ -118,7 +121,7 @@ end
 
 local function CreateOptions()
     opt = CreateFrame("Frame", "NoobsForeverDungeonMapperOptions", UIParent, "BackdropTemplate")
-    opt:SetSize(WIDTH, 634)
+    opt:SetSize(WIDTH, 664)
     opt:SetPoint("CENTER")
     opt:SetFrameStrata("DIALOG")
     opt:SetToplevel(true)

@@ -53,6 +53,7 @@ widgetMeta = {
             GetCenter = function() return 100, 100 end,
             GetEffectiveScale = function() return 1 end,
             CreateTexture = function() return NewWidget() end,
+            CreateLine = function() return NewWidget() end,
             CreateFontString = function() return NewWidget() end,
             CreateMaskTexture = function() return NewWidget() end,
             CreateAnimationGroup = function() return NewWidget() end,
@@ -82,7 +83,20 @@ INSTANCE_RESET_SUCCESS = "%s has been reset."
 issecretvalue = function(v) return type(v) == "table" and v.secret end
 function IsInInstance() return game.inInstance, game.instanceType end
 function GetInstanceInfo()
-    return game.instanceName or "Azeroth", game.instanceType, 1, "Normal", 5, 0, false, game.instanceID
+    return game.instanceName or "Azeroth", game.instanceType, 1, "Normal", 5, 0, false, game.instanceID, 5, game.lfgID
+end
+-- the dungeon finder's boss progress for the dungeon we are in: game.lfgBosses = { { name, killed }, ... }
+function GetLFGDungeonNumEncounters(id) return game.lfgBosses and #game.lfgBosses or 0 end
+function GetLFGDungeonEncounterInfo(id, i)
+    local b = game.lfgBosses[i]
+    return b[1], 0, b[2]
+end
+function UnitLevel() return game.level or 20 end
+function GetQuestDifficultyColor(l)
+    local d = l - (game.level or 20)
+    if d >= 5 then return { r = 1, g = 0.1, b = 0.1 } end
+    if d >= -2 then return { r = 1, g = 1, b = 0 } end
+    return { r = 0.5, g = 0.5, b = 0.5 }
 end
 function GetSubZoneText() return game.subzone end
 function GetZoneText() return game.instanceName or "Azeroth" end
@@ -361,6 +375,61 @@ ns.db.welcomed = false
 Fire("PLAYER_ENTERING_WORLD")
 check(NoobsForeverDungeonMapperWelcome:IsShown(), "welcome shows when it was never dismissed")
 NoobsForeverDungeonMapperWelcome:Hide()
+
+realPrint("Kills are recorded even if the drawing breaks, and the game's progress fills gaps")
+game.inInstance, game.instanceType, game.instanceID, game.instanceName, game.lfgID = true, "party", 48, "Blackfathom Deeps", 99
+game.lfgBosses = nil
+Fire("PLAYER_ENTERING_WORLD")
+ns.ResetRun(48)
+local bfd = ns.Dungeons[48]
+local realRefresh = ns.Refresh
+ns.Refresh = function() error("simulated drawing error") end
+Fire("ENCOUNTER_END", bfd.bosses[1].id, bfd.bosses[1].name, 1, 5, 1)
+ns.Refresh = realRefresh
+check(ns.IsKilled(48, bfd.bosses[1]), "the kill is recorded although drawing failed")
+local last = ns.db.encounterLog[#ns.db.encounterLog]
+check(last.kind == "end" and last.matched == bfd.bosses[1].name and last.success == "1.0000", "the encounter is logged with the match")
+Fire("ENCOUNTER_END", 424242, "Some Unknown Boss", 1, 5, 1)
+check(ns.db.encounterLog[#ns.db.encounterLog].matched == "NO MATCH", "an unmatched encounter is logged as NO MATCH")
+game.lfgBosses = { { bfd.bosses[1].name, false }, { bfd.bosses[2].name, true } }
+ns.SyncKillsFromGame(48)
+check(ns.IsKilled(48, bfd.bosses[2]), "a kill the game reports is picked up")
+check(ns.IsKilled(48, bfd.bosses[1]), "a kill we know of is not cleared when the game says up")
+game.lfgBosses = nil
+ns.SyncKillsFromGame(48)
+check(ns.IsKilled(48, bfd.bosses[2]), "no game progress leaves kills alone")
+ns.ResetRun(48)
+game.lfgBosses = { { bfd.bosses[3].name, true } }
+Fire("PLAYER_ENTERING_WORLD")
+ns.ShowDungeon(48)
+check(ns.IsKilled(48, bfd.bosses[3]), "opening the map in a dungeon syncs the game's progress")
+game.lfgBosses = nil
+ns.ResetRun(48)
+game.inInstance, game.instanceType, game.instanceID, game.instanceName, game.lfgID = false, "none", nil, nil, nil
+Fire("PLAYER_ENTERING_WORLD")
+ns.HideMap()
+
+realPrint("Level colours follow the difficulty for the player's level")
+game.level = 20
+check(ns.DifficultyColor(17, 26) == "|cffffff00", "a dungeon around your level is yellow")
+check(ns.DifficultyColor(55, 60) == "|cffff1a1a", "a dungeon far above you is red")
+check(ns.DifficultyColor(5, 9) == "|cff808080", "a dungeon far below you is grey")
+check(ns.LevelsColored(17, 26) == "|cffffff0017-26|r" and ns.LevelsColored(60, 60):find("60|r", 1, true), "levels are coloured text")
+
+realPrint("The boss order is drawn as lines")
+ns.db.route = true
+ns.ShowDungeon(48, 1)
+local routeFrame = NoobsForeverDungeonMapperFrame
+local shown = 0
+for _, l in ipairs(routeFrame.routeLines) do if l:IsShown() then shown = shown + 1 end end
+check(shown > 0, "lines join the bosses of a floor that has pinned bosses")
+ns.db.route = false
+ns.Refresh()
+shown = 0
+for _, l in ipairs(routeFrame.routeLines) do if l:IsShown() then shown = shown + 1 end end
+check(shown == 0, "the lines go away when the option is off")
+ns.db.route = true
+ns.HideMap()
 
 realPrint("Boss pins from OpenMap and the placer")
 local pinned = 0

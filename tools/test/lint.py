@@ -131,7 +131,7 @@ WOW_API = {
     "debugprofilestop", "GetFramerate", "IsAddOnLoaded", "GetUnitSpeed", "IsPlayerMoving", "IsMouselooking", "IsModifiedClick", "GetPhysicalScreenSize", "IsMouseButtonDown",
     "IsInGuild", "UnitIsPlayer", "GetUnitName", "UnitName", "Ambiguate", "ToggleWorldMap",
     "UnitRace", "GetLocale", "PlaySound", "IsInInstance", "GetInstanceInfo",
-    "GetSubZoneText", "UnitPosition", "GetPlayerFacing", "IsIndoors", "GetZoneText", "GetRealZoneText", "GetMinimapZoneText", "NoobsForeverDungeonMapper_OnCompartmentClick", "NoobsForeverDungeonMapper_Binding", "NoobsForeverDungeonMapper_OnCompartmentEnter",
+    "GetSubZoneText", "GetLFGDungeonNumEncounters", "GetLFGDungeonEncounterInfo", "GetQuestDifficultyColor", "UnitPosition", "GetPlayerFacing", "IsIndoors", "GetZoneText", "GetRealZoneText", "GetMinimapZoneText", "NoobsForeverDungeonMapper_OnCompartmentClick", "NoobsForeverDungeonMapper_Binding", "NoobsForeverDungeonMapper_OnCompartmentEnter",
     "NoobsForeverDungeonMapper_OnCompartmentLeave", "GetNormalizedRealmName", "GetRealmName", "GetNumGuildMembers", "GetGuildRosterInfo", "BNGetNumFriends",
 }
 

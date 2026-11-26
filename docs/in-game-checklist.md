@@ -51,6 +51,14 @@ Go into any dungeon (The Hall of Thanes is best, then Ragefire Chasm or Deadmine
       Does the ring match where you really are? Note the area names shown under the map.
 - [ ] Turn on *Live view* in Options: the minimap gets bigger inside a dungeon and goes back to normal outside.
 
+- [ ] Dungeon levels in the *Dungeons* menu and the window's title line are coloured for your level
+      (red too hard, yellow about right, grey trivial). Do the colours look right to you?
+- [ ] Gold lines join the bosses in order on each floor, and turn grey once you pass a boss.
+- [ ] **Boss kills during a run:** kill a boss, then open the map. It should show as defeated (grey with a
+      tick). Leave and come back in: it should still be. After a dungeon reset it should start fresh.
+      If a kill doesn't show, note which boss, and send the saved-variables file (see section 4): it
+      keeps a log of the boss fights as the game reported them.
+
 ## 4. The position check (very useful, 2 minutes)
 
 Stand inside a dungeon, then type:
@@ -59,7 +67,8 @@ Stand inside a dungeon, then type:
 /fd probe
 ```
 
-- [ ] Take a screenshot of the chat lines it prints (it lists what the game does and doesn't tell addons).
+- [ ] Take a screenshot of the chat lines it prints (it lists what the game does and doesn't tell addons,
+      including "Boss progress from the game" for the dungeon you are in).
 
 Then turn on recording, walk through as much of the dungeon as you can, and log out from the character
 select screen (this saves the file):
