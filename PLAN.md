@@ -144,7 +144,7 @@ Feedback from guild testers, and what was done:
 | Bug: killed bosses show on entering but not live during a run | **Hardened, root cause not confirmed.** The kill is now recorded before any drawing, and the drawing is protected (an error there used to be able to abort the handler before the kill was saved). The game's own boss progress (dungeon finder API, `GetLFGDungeonEncounterInfo`) is read on entering, on opening the map and 2 s after a kill, and only ever adds kills. Every boss event is logged (`encounterLog`, last 40) and `/fd probe` prints the game's progress. Needs a real run to confirm which path was failing. |
 | Path/route through a dungeon | **v1 done**: lines join the bosses in order on each floor (option). They are straight lines (order, not walking path); a real path needs hand-placed waypoints, which the placer could be extended to collect. "Next boss" now says which floor it is on. |
 | Bug: parts of the map greyed out when viewing outside the dungeon | **Not reproduced.** No desaturation or dimming exists in the code outside a dungeon. Needs a screenshot, the dungeon's name and the game language. Candidates: killed bosses shown grey from an old run, the "viewing only" text, or missing tiles on non-English clients (see the green-squares note). |
-| Quest locations inside dungeons | **Research needed.** Questie has no in-dungeon positions. Possible source: the game's `QuestPOIBlob`/`QuestPOIPoint` tables (positions on UiMaps, which the dungeon floors already use) plus quest names, and the quest log API for state. Not started. |
+| Quest locations inside dungeons | **Researched, see [docs/quests-research.md](docs/quests-research.md): the game has no in-dungeon quest positions.** Questie has no in-dungeon positions. Possible source: the game's `QuestPOIBlob`/`QuestPOIPoint` tables (positions on UiMaps, which the dungeon floors already use) plus quest names, and the quest log API for state. Not started. |
 
 ## Status 2026-11-25 (floor switching)
 
@@ -159,3 +159,10 @@ Feedback from guild testers, and what was done:
   atlas (as retail does) when `C_Texture.GetAtlasInfo` finds it, else our blue swirl (muted purple for raids),
   cut from a maintainer-supplied picture by `tools/make_icons.py`. Which one shows in the Forever client is
   unverified; the checklist asks the tester.
+
+## Status 2026-11-25 (quest research)
+
+- Researched quest locations: no data source exists for positions inside dungeons (client tables, MoP tables and
+  Questie all lack them). The quest log API can list the player's own quests and objectives, so the plan is
+  "my quests here" with quest markers on bosses named in objectives (docs/quests-research.md, option 1), then
+  player-placed quest spots if wanted. Nothing built yet.
