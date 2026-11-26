@@ -709,6 +709,18 @@ end
 check(wtilesOK, "the world map's tiles are layered the same way")
 ns.HideWorldMap()
 
+realPrint("Bosses with no pin are explained on the map window")
+ns.db.placer, ns.db.panel = false, "bosses"
+ns.ShowDungeon(34)
+check(NoobsForeverDungeonMapperFrame.listHint.text:find("5 bosses have no pin on the map yet", 1, true), "Stockade says its 5 bosses have no pin and how to add them")
+ns.ShowDungeon(36, 1)
+check(NoobsForeverDungeonMapperFrame.listHint.text:find("1 boss has no pin", 1, true), "singular for one boss (Deadmines)")
+ns.db.placer = true
+ns.ShowDungeon(34)
+check(not NoobsForeverDungeonMapperFrame.listHint.text:find("no pin on the map yet", 1, true), "the hint is not repeated in mapmaker mode")
+ns.db.placer = false
+ns.HideMap()
+
 realPrint("Boss pins from OpenMap and the placer")
 local pinned = 0
 for _, b in ipairs(ns.Dungeons[36].bosses) do if b.x then pinned = pinned + 1 end end

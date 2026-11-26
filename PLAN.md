@@ -215,3 +215,13 @@ Feedback from guild testers, and what was done:
   drawn before the backdrop and get dimmed by it. Fix: tiles are now ARTWORK sublevel -2 and the route lines ARTWORK
   sublevel 1, so the order is explicit (dungeon and world map). Replaces the earlier re-request guess (reverted).
 - Unverified in game; the fix should make the block pattern disappear on every open and every dungeon.
+
+## Status 2026-11-25 (Stockade has no boss pins)
+
+- Reported: the Stormwind Stockade map shows no boss locations. Cause: a data gap, not a bug. No source has them: the
+  Stockade's art is the Cataclysm/Mists remake (its three skull markers are the remake's bosses), and Forever's bosses are
+  the classic five (Targorr the Dread, Kam Deepfury, Hamhock, Dextren Ward, Bazil Thredd), so OpenMap and the game's
+  journal have none to match. Same for Ragefire Chasm, Scarlet Monastery, Scholomance and the new dungeons (the list
+  of dungeons with unpinned bosses is in HANDOFF's pin notes). The map window now says why and how to add them.
+- To fix properly: a player places the pins with Options > Help map the bosses and sends "Share my boss pins"; the lines
+  go into `Data/BossPlaces.lua`.

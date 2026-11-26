@@ -514,8 +514,18 @@ function ns.UpdatePlacerUI()
     if ns.db.panel == "quests" then
         f.listHint:SetText("Quests from your quest log that belong to this dungeon. A ! marks the boss a quest names.")
     else
-        f.listHint:SetText(ns.db.placer and "Mapmaker mode: click a boss, then click the map. Right-click a boss: mark killed."
-            or f.listHintDefault)
+        local hint = ns.db.placer and "Mapmaker mode: click a boss, then click the map. Right-click a boss: mark killed."
+            or f.listHintDefault
+        -- say why bosses are missing from the map, and how to add them
+        local missing = 0
+        if d and #d.floors > 0 then
+            for _, b in ipairs(d.bosses) do if not b.x then missing = missing + 1 end end
+        end
+        if missing > 0 and not ns.db.placer then
+            hint = hint .. "\n|cffffd100" .. (missing == 1 and "1 boss has" or (missing .. " bosses have"))
+                .. " no pin on the map yet. To add them: Options > Help map the bosses.|r"
+        end
+        f.listHint:SetText(hint)
     end
 end
 
