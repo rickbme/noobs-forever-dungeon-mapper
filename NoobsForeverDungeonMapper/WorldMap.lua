@@ -140,19 +140,31 @@ local function PinClick(self)
     end)
 end
 
+-- The entrance icon: the game's own "Dungeon" and "Raid" icons (what retail's world map uses) when this
+-- client has them, else our blue swirl (and a muted purple one for raids) from Media/Textures.
+local ICONS = "Interface\\AddOns\\NoobsForeverDungeonMapper\\Media\\Textures\\"
+local function SetEntranceIcon(tex, raid)
+    local atlas = raid and "Raid" or "Dungeon"
+    local ok, info = false, nil
+    if C_Texture and C_Texture.GetAtlasInfo then ok, info = pcall(C_Texture.GetAtlasInfo, atlas) end
+    if ok and info and tex.SetAtlas then
+        tex:SetAtlas(atlas)
+    else
+        tex:SetTexture(ICONS .. (raid and "DungeonPortalRaid" or "DungeonPortal"))
+        tex:SetTexCoord(0, 1, 0, 1)
+    end
+end
+
 local function CreatePin(i)
     local p = CreateFrame("Button", nil, f.canvas)
     p:SetFrameLevel(f.canvas:GetFrameLevel() + 6)
-    p.glow = CircleTexture(p, "BACKGROUND", 34)
+    p.glow = CircleTexture(p, "BACKGROUND", 42)
     p.glow:SetPoint("CENTER")
     p.glow:SetVertexColor(0.3, 0.8, 1, 0.55)
-    p.ring = CircleTexture(p, "ARTWORK", 20)
-    p.ring:SetPoint("CENTER")
-    p.ring:SetVertexColor(1, 1, 1, 1)
-    p.dot = CircleTexture(p, "OVERLAY", 16)
-    p.dot:SetPoint("CENTER")
-    p.num = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    p.num:SetPoint("CENTER", 0, 0)
+    p.icon = p:CreateTexture(nil, "ARTWORK")
+    p.icon:SetAllPoints()
+    p.num = p:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+    p.num:SetPoint("BOTTOMRIGHT", 3, -3)
     p.num:SetTextColor(1, 1, 1)
     p:SetScript("OnEnter", PinTooltip)
     p:SetScript("OnLeave", GameTooltip_Hide)
@@ -265,7 +277,7 @@ local function Draw()
 
     for _, p in ipairs(pins) do p:Hide() end
     local here = HighlightedID()
-    local size = data.uiMapID == WORLD and 18 or 22
+    local size = data.uiMapID == WORLD and 22 or 28
     for i, pin in ipairs(data.pins) do
         local p = pins[i] or CreatePin(i)
         p.instances = pin[3]
@@ -277,7 +289,8 @@ local function Draw()
             if not inst[3] then raidOnly = false end
             if inst[1] == here then isHere = true end
         end
-        if raidOnly then p.dot:SetVertexColor(0.6, 0.25, 0.85) else p.dot:SetVertexColor(0.8, 0.15, 0.1) end
+        SetEntranceIcon(p.icon, raidOnly)
+        p.raidOnly = raidOnly
         p.num:SetText(#pin[3] > 1 and #pin[3] or "")
         p.glow:SetShown(isHere)
         p:Show()

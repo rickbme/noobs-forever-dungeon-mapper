@@ -33,7 +33,9 @@ and copy any red error text. That's all we need.
       am" turns this off (the button then opens the last dungeon's map instead).
 - [ ] Open it from a dungeon (*World map* button, the minimap right-click menu, or its key). Azeroth shows with red dots.
 - [ ] Clicking *Eastern Kingdoms* or *Kalimdor* (the buttons below the map, or the continent itself) zooms in.
-- [ ] The dots sit on the right places: for example Deadmines in Westfall, Stockade in Stormwind,
+- [ ] Dungeon entrances are small blue swirl icons (the game's own dungeon icon if it has one, otherwise our
+      swirl); raids are purple. Tell us which style you see.
+- [ ] The icons sit on the right places: for example Deadmines in Westfall, Stockade in Stormwind,
       Ragefire Chasm by Orgrimmar, Wailing Caverns in the Barrens. **Note any dot that is clearly wrong.**
 - [ ] Hovering a dot shows the dungeon's name and levels. Clicking it opens that dungeon's map.
 

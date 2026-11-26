@@ -171,9 +171,13 @@ def main():
                 page.paste(blp(casc.read(fid)).convert("RGB"), ((n % 4) * 256, (n // 4) * 256))
             page = page.crop((0, 0, 1002, 668))
             d = ImageDraw.Draw(page)
+            icons = os.path.join(ROOT, "NoobsForeverDungeonMapper", "Media", "Textures")
+            normal = Image.open(os.path.join(icons, "DungeonPortal.tga")).convert("RGBA")
+            raid = Image.open(os.path.join(icons, "DungeonPortalRaid.tga")).convert("RGBA")
+            size = 22 if ui == WORLD else 28
             for px, py, inst in pins:
-                x, y = px * 1002, py * 668
-                d.ellipse((x - 5, y - 5, x + 5, y + 5), fill=(220, 40, 40), outline=(255, 255, 255))
+                icon = (raid if all(i[2] for i in inst) else normal).resize((size, size), Image.LANCZOS)
+                page.paste(icon, (int(px * 1002 - size / 2), int(py * 668 - size / 2)), icon)
             page.save(os.path.join(preview, "world_%d.png" % ui))
 
 

@@ -152,3 +152,10 @@ Feedback from guild testers, and what was done:
   number with gaps, and the hide loop used `ipairs`, which stops at the first gap. Now `pairs`. The harness
   switches through every floor of every multi-floor dungeon and fails if any pin from another floor is shown
   (it found 39 before the fix).
+
+## Status 2026-11-25 (world map icons)
+
+- The red circles on the world map are replaced by dungeon entrance icons: the game's own `Dungeon` / `Raid`
+  atlas (as retail does) when `C_Texture.GetAtlasInfo` finds it, else our blue swirl (muted purple for raids),
+  cut from a maintainer-supplied picture by `tools/make_icons.py`. Which one shows in the Forever client is
+  unverified; the checklist asks the tester.

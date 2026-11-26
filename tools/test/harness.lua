@@ -54,6 +54,7 @@ widgetMeta = {
             GetEffectiveScale = function() return 1 end,
             CreateTexture = function() return NewWidget() end,
             CreateLine = function() return NewWidget() end,
+            SetAtlas = function(s, a) s.atlas = a end,
             CreateFontString = function() return NewWidget() end,
             CreateMaskTexture = function() return NewWidget() end,
             CreateAnimationGroup = function() return NewWidget() end,
@@ -258,6 +259,24 @@ SlashCmdList.NOOBSFOREVERDUNGEONMAPPER("button")
 check(mb:IsShown(), "/fd button shows it again")
 ns.db.worldFirst = true
 ns.HideMap()
+
+realPrint("Entrance icons on the world map")
+ns.ShowWorldMap(1415)
+local iconPin, raidPin
+for _, p in ipairs(NoobsForeverDungeonMapperWorld.pins) do
+    if p:IsShown() then
+        local raidOnly = true
+        for _, inst in ipairs(p.instances) do if not inst[3] then raidOnly = false end end
+        if raidOnly then raidPin = raidPin or p else iconPin = iconPin or p end
+    end
+end
+check(iconPin and iconPin.icon.texture and iconPin.icon.texture:find("DungeonPortal", 1, true), "a dungeon entrance uses the swirl icon when the game has none")
+check(raidPin == nil or raidPin.icon.texture:find("DungeonPortalRaid", 1, true), "a raid-only entrance uses the raid icon")
+C_Texture = { GetAtlasInfo = function(name) return name == "Dungeon" or name == "Raid" end }
+ns.ShowWorldMap(1415)
+check(iconPin.icon.atlas == "Dungeon", "the game's own Dungeon icon is used when this client has it")
+C_Texture = nil
+ns.HideWorldMap()
 
 realPrint("The map button opens the world map where the player is")
 local world2

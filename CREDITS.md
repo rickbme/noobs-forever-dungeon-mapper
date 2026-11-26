@@ -68,6 +68,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## Icons
+
+`art/icons/dungeon-portal.png` (the blue portal the world map's fallback entrance icons are cut from) was supplied
+by the project maintainer for this addon. The addon prefers the game's own Dungeon and Raid icons when the
+client has them.
+
 ## Other references
 
 Studied but not copied (both GPL): perweum/dungeon-crawler-forever and Arcaneology/WowHandbookAddon.

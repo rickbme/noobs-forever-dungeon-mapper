@@ -40,6 +40,8 @@ client's own tables, and the entrances from OpenMap's `Places.lua` (`tools/map-w
 ~/.venvs/fd/bin/python -P tools/map-world/build.py --preview /tmp/fd-preview --wow "<World of Warcraft folder>"
 ```
 
+The entrance icons are cut from `art/icons/dungeon-portal.png` by `python3 -P tools/make_icons.py` (Pillow).
+
 The second form also renders each map with its pins as PNGs, to check that the pins land in the right
 places before you ship them.
 
