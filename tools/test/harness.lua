@@ -37,6 +37,7 @@ widgetMeta = {
             IsShown = function(s) return s.shown end,
             SetShown = function(s, v) s.shown = not not v end,
             SetAlpha = function(s, a) s.alpha = a end,
+            SetTexCoord = function(s, ...) s.coords = { ... } end,
             IsMouseOver = function(s) return rawget(s, "hovered") or false end,
             GetAlpha = function(s) return rawget(s, "alpha") or 1 end,
             SetScript = function(s, n, fn) s.scripts[n] = fn end,
@@ -719,6 +720,16 @@ ns.db.placer = true
 ns.ShowDungeon(34)
 check(not NoobsForeverDungeonMapperFrame.listHint.text:find("no pin on the map yet", 1, true), "the hint is not repeated in mapmaker mode")
 ns.db.placer = false
+ns.HideMap()
+
+realPrint("Boss pins are skulls")
+ns.ShowDungeon(48, 1)
+local skullPin
+for _, p in pairs(NoobsForeverDungeonMapperFrame.pins) do if p:IsShown() and not skullPin then skullPin = p end end
+check(skullPin ~= nil, "a pin is on screen")
+check(skullPin.dot.texture == "Interface\\TargetingFrame\\UI-RaidTargetingIcons", "boss pins use the game's raid target icon sheet")
+local sc = skullPin.dot.coords
+check(sc and sc[1] == 0.75 and sc[2] == 1 and sc[3] == 0.25 and sc[4] == 0.5, "and its skull (row 2, column 4)")
 ns.HideMap()
 
 realPrint("Boss pins from OpenMap and the placer")

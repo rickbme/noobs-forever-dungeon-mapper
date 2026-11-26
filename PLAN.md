@@ -225,3 +225,10 @@ Feedback from guild testers, and what was done:
   of dungeons with unpinned bosses is in HANDOFF's pin notes). The map window now says why and how to add them.
 - To fix properly: a player places the pins with Options > Help map the bosses and sends "Share my boss pins"; the lines
   go into `Data/BossPlaces.lua`.
+
+## Status 2026-11-25 (skull boss pins)
+
+- Boss pins on the dungeon map are now the game's skull (the raid target icon sheet, `UI-RaidTargetingIcons`, skull at
+  texcoords 0.75-1, 0.25-0.5) tinted by state (red, gold next, grey killed) on a soft dark disc, with the boss number in the
+  corner and a tick when defeated. Unverified in game: legibility on the parchment and that the icon sheet path is the same
+  in the Forever client.

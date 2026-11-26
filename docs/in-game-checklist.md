@@ -55,6 +55,9 @@ and copy any red error text. That's all we need.
 Go into any dungeon (The Hall of Thanes is best, then Ragefire Chasm or Deadmines).
 
 - [ ] The map opens by itself on a sensible floor. It closes when you leave.
+- [ ] Boss pins are **skull icons** (like the skulls on the game's own dungeon maps) with a small number in the
+      corner. The next boss's skull is gold and pulses, a defeated boss's skull is grey with a tick. Is the skull
+      easy to see on the parchment, and the number easy to read?
 - [ ] Boss numbers on the map match the list. Clicking a boss in the list pulses its pin.
 - [ ] After you kill a boss, it goes grey with a tick and the next boss pulses gold.
 - [ ] If the dungeon has more than one floor, the < and > buttons change floor.

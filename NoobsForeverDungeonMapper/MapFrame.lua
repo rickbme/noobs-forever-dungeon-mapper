@@ -12,7 +12,7 @@ local ROW_H = 17
 local MAX_ROWS = 24
 
 local COLORS = {
-    normal = { 0.70, 0.18, 0.12 },
+    normal = { 1.00, 0.45, 0.40 },
     nextUp = { 1.00, 0.78, 0.10 },
     killed = { 0.45, 0.45, 0.45 },
     fight  = { 1.00, 0.20, 0.20 },
@@ -63,13 +63,19 @@ local function CreatePin(i)
     a:SetFromAlpha(0.9); a:SetToAlpha(0); a:SetDuration(1.1)
     p.pulse = ag
 
-    p.border = CircleTexture(p, "BORDER", 22)
+    -- a skull, like the ones the game's own dungeon maps mark bosses with: the game's raid target skull,
+    -- tinted for the boss's state, on a soft dark disc so it reads on the parchment
+    p.border = CircleTexture(p, "BORDER", 26)
     p.border:SetPoint("CENTER")
-    p.border:SetVertexColor(0, 0, 0, 0.9)
-    p.dot = CircleTexture(p, "ARTWORK", 18)
+    p.border:SetVertexColor(0, 0, 0, 0.45)
+    p.dot = p:CreateTexture(nil, "ARTWORK")
+    p.dot:SetSize(24, 24)
     p.dot:SetPoint("CENTER")
-    p.num = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    p.num:SetPoint("CENTER", 0, 0)
+    p.dot:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
+    p.dot:SetTexCoord(0.75, 1, 0.25, 0.5) -- the skull (8th icon: row 2, column 4)
+    -- the boss's number sits in the corner, to match the boss list
+    p.num = p:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+    p.num:SetPoint("BOTTOMRIGHT", 5, -5)
     p.num:SetTextColor(1, 1, 1)
     p.quest = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     p.quest:SetPoint("BOTTOM", p, "TOP", 0, -4)
@@ -77,8 +83,8 @@ local function CreatePin(i)
     p.quest:SetText("!")
     p.quest:Hide()
     p.check = p:CreateTexture(nil, "OVERLAY")
-    p.check:SetSize(16, 16)
-    p.check:SetPoint("CENTER")
+    p.check:SetSize(14, 14)
+    p.check:SetPoint("BOTTOMRIGHT", 4, -4) -- where the number was: a tick once the boss is down
     p.check:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
 
     p:RegisterForClicks("LeftButtonUp", "RightButtonUp")
@@ -408,7 +414,6 @@ local function DrawPins(d)
                 or (b == nextBoss and COLORS.nextUp) or COLORS.normal
             p.dot:SetVertexColor(c[1], c[2], c[3])
             p.num:SetText(killed and "" or i)
-            p.num:SetTextColor(b == nextBoss and 0 or 1, b == nextBoss and 0 or 1, b == nextBoss and 0 or 1)
             p.check:SetShown(killed)
             p.quest:SetShown(view.bossQuests and view.bossQuests[i] ~= nil and not killed)
             p.glow:SetShown(b == nextBoss or fighting == b)
