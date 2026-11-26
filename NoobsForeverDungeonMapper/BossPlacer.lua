@@ -28,11 +28,18 @@ local function Apply(instanceID, boss, floor, x, y)
     x, y = Round(x), Round(y)
     ns.db.bossPlaces[instanceID] = ns.db.bossPlaces[instanceID] or {}
     ns.db.bossPlaces[instanceID][boss.name] = { floor, x, y }
+    if ns.db.retract[instanceID] then ns.db.retract[instanceID][boss.name] = nil end -- a new pin replaces the withdrawal
     boss.floor, boss.x, boss.y, boss.fromGuild = floor, x, y, nil
 end
 
 local function Remove(instanceID, boss)
     local t = ns.db.bossPlaces[instanceID]
+    -- a pin that had already been sent and is now taken away: the next Share withdraws it
+    local sent = ns.db.sentPins[instanceID] and ns.db.sentPins[instanceID][boss.name]
+    if sent and t and t[boss.name] then
+        ns.db.retract[instanceID] = ns.db.retract[instanceID] or {}
+        ns.db.retract[instanceID][boss.name] = true
+    end
     if t then t[boss.name] = nil end
     if boss.original then
         boss.floor, boss.x, boss.y = boss.original.floor, boss.original.x, boss.original.y
@@ -118,7 +125,7 @@ local function ParseLine(line)
     line = line:gsub("^[%s>`]+", "")
     line = line:gsub("[%s`]+$", "")
     local rest = line:match("^NFDM|(.*)$")
-    if not rest then return nil end
+    if not rest or rest:find("^REMOVE|") then return nil end -- not a pin line (or a player's withdrawal: nothing to import)
     local f = {}
     for part in (rest .. "|"):gmatch("([^|]*)|") do f[#f + 1] = part end
     if #f < 6 then return nil, "not a complete pin line: " .. line:sub(1, 40) end
@@ -203,11 +210,30 @@ function ns.ExportBossPlaces(all)
             end
         end
     end
+    -- pins the player sent earlier and has since removed: "NFDM|REMOVE|id|dungeon|boss|code" withdraws them
+    for _, id in ipairs(ns.DungeonOrder) do
+        local r = ns.db.retract[id]
+        if r then
+            for _, boss in ipairs(ns.Dungeons[id].bosses) do
+                if r[boss.name] then
+                    lines[#lines + 1] = ("NFDM|REMOVE|%d|%s|%s|%s"):format(id, ns.Dungeons[id].name, boss.name, code)
+                end
+            end
+        end
+    end
     return lines
 end
 
--- Remember that the player has sent all their current pins, so the next Share only offers new or moved ones.
+function ns.CountRetractions()
+    local n = 0
+    for _, r in pairs(ns.db.retract) do for _ in pairs(r) do n = n + 1 end end
+    return n
+end
+
+-- Remember that the player has sent all their current pins (and withdrawals), so the next Share only offers new
+-- or moved ones.
 function ns.MarkPinsSent()
+    ns.db.retract = {}
     ns.db.sentPins = {}
     for id, places in pairs(ns.db.bossPlaces) do
         ns.db.sentPins[id] = {}
@@ -248,7 +274,10 @@ local function RefreshShare()
         share.status:SetText(("No new pins to send: all %d of your pins are marked as sent."):format(total))
     else
         share.box:SetText(HEADING .. "\n" .. table.concat(pages[share.page], "\n"))
-        local text = ("%d pin(s) %s (%d in all)."):format(#lines, share.showAll and "shown" or "to send", total)
+        local removals = ns.CountRetractions()
+        local text = ("%d pin(s) %s"):format(#lines - removals, share.showAll and "shown" or "to send")
+        if removals > 0 then text = text .. (", and %d removal(s) of pins you sent before"):format(removals) end
+        text = text .. (" (%d in all)."):format(total)
         if #pages > 1 then text = text .. ("  Message %d of %d: paste each as its own message."):format(share.page, #pages) end
         share.status:SetText(text)
     end
@@ -261,7 +290,7 @@ local function RefreshShare()
 end
 
 function ns.ShowShareWindow()
-    if ns.CountPlacedPins() == 0 then
+    if ns.CountPlacedPins() == 0 and ns.CountRetractions() == 0 then
         ns.Print("You haven't placed any boss pins yet. Turn on \"Help map the bosses\" in the options first.")
         return
     end

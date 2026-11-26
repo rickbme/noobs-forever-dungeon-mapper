@@ -130,6 +130,9 @@ map with **Undo**, **Remove pin** and **Done** buttons.
       *Remove pin* (with the boss picked) or a **right-click on your own pin** removes it. Right-click the map
       cancels picking a boss. While placing pins, clicking never marks a boss as killed.
 - [ ] *Done* ends mapmaker mode (so right-click marks kills again).
+- [ ] **Taking a pin back:** after you have sent your pins (*I've sent these*), remove one of them (right-click it or
+      *Remove pin*). Open *Share my boss pins*: it says "and 1 removal(s) of pins you sent before" and offers a
+      `NFDM|REMOVE|...` line to paste, so your old pin is withdrawn.
 - [ ] In Options, *Import guild pins* opens a box: paste the guild's block of `NFDM|...` lines, press *Import*, and the
       bosses it covers get pins (purple ring, "From the guild's shared pins" in the tooltip). Your own pins always win.
 - [ ] **Several dungeons before sharing:** place pins in two or three dungeons, then open *Share my boss pins*. One list

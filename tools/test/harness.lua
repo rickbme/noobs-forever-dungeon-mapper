@@ -494,8 +494,41 @@ sw.prev.scripts.OnClick()
 check(sw.box:GetText() == firstPage, "Previous goes back")
 sw.sent.scripts.OnClick()
 check(#ns.ExportBossPlaces() == 0, "marking sent covers every page")
-ns.db.bossPlaces, ns.db.sentPins = {}, {}
+ns.db.bossPlaces, ns.db.sentPins, ns.db.retract = {}, {}, {}
 sw:Hide()
+
+realPrint("Withdrawing a pin that was already sent")
+ns.db.placer = true
+PlacePin(389, 1, 0.4, 0.4)
+PlacePin(389, 2, 0.6, 0.6)
+ns.MarkPinsSent()
+check(#ns.ExportBossPlaces() == 0 and ns.CountRetractions() == 0, "everything sent: nothing to offer")
+local rfcBoss1 = ns.Dungeons[389].bosses[1]
+ns.ClearBossPlace(389, rfcBoss1)
+local out = ns.ExportBossPlaces()
+check(#out == 1 and out[1] == ("NFDM|REMOVE|389|Ragefire Chasm|%s|%s"):format(rfcBoss1.name, ns.Contributor()), "removing a sent pin offers a withdrawal line")
+check(ns.CountRetractions() == 1, "and counts it")
+ns.ShowShareWindow()
+check(sw:IsShown() and sw.status:GetText():find("0 pin(s) to send, and 1 removal(s)", 1, true), "the Share window says there is a removal to send")
+sw.sent.scripts.OnClick()
+check(ns.CountRetractions() == 0 and #ns.ExportBossPlaces() == 0, "I've sent these clears the withdrawal")
+sw:Hide()
+PlacePin(389, 1, 0.4, 0.4)
+ns.MarkPinsSent()
+ns.ClearBossPlace(389, rfcBoss1)
+check(ns.CountRetractions() == 1, "(removed again after being sent)")
+PlacePin(389, 1, 0.5, 0.5)
+check(ns.CountRetractions() == 0, "placing a new pin for that boss cancels the withdrawal")
+ns.UndoBossPlace()
+ns.ClearBossPlace(389, rfcBoss1)
+ns.db.sentPins, ns.db.retract = {}, {}
+PlacePin(389, 1, 0.3, 0.3)
+ns.ClearBossPlace(389, rfcBoss1)
+check(ns.CountRetractions() == 0, "removing a pin that was never sent needs no withdrawal")
+local n2, skipped2 = ns.ImportGuildPins("NFDM|REMOVE|389|Ragefire Chasm|Oggleflint|abcdef")
+check(n2 == 0 and #skipped2 == 0, "importing a withdrawal line does nothing and is not an error")
+while ns.CanUndoBossPlace() do ns.UndoBossPlace() end
+ns.db.bossPlaces, ns.db.sentPins, ns.db.retract = {}, {}, {}
 ns.db.placer = false
 ns.HideMap()
 

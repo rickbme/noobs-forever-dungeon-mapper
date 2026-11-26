@@ -275,3 +275,10 @@ Feedback from guild testers, and what was done:
   each line (`NFDM|...|code`), "sent" tracking (`sentPins`: new or moved pins only, Show all / I've sent these), pages that
   fit Discord's 2000-character message, and in `tools/ingest_pins.py` one opinion per contributor with the latest winning
   (submissions kept oldest first; a line sent again moves to the end). Docs: docs/boss-pins.md.
+
+## Status 2026-11-25 (judging and withdrawing pins)
+
+- A player can withdraw a pin they already sent: removing it adds a `NFDM|REMOVE|id|dungeon|boss|code` line to the next
+  Share (cleared by "I've sent these"; a new pin for the boss cancels it). `tools/ingest_pins.py` applies withdrawals and
+  gained `--explain`, `--min-agree N`, `--ignore SPEC` (tools/pins/ignore.txt). Redundancy rule: the agreeing majority wins,
+  a boss nobody agrees on is left out, release publicly with `--min-agree 2`. See docs/boss-pins.md.

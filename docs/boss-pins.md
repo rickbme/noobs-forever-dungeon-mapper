@@ -51,6 +51,26 @@ python3 -P tools/ingest_pins.py --block                   # print the merged pin
   replaces their earlier ones, so moving a pin and sending again doesn't make it look like two players agree.
   Lines without a code (older versions) each count as a separate anonymous player.
 
+## Keeping the good data and dropping the bad
+
+- **One pin per player per boss.** A player who maps the same boss again, or moves a pin, replaces their earlier one
+  (the merge tool uses the latest). Sending more dungeons later just adds bosses.
+- **Taking a pin back.** If a player removes a pin they already sent, the next Share includes a withdrawal line,
+  `NFDM|REMOVE|id|dungeon|boss|code`, which removes only that player's pin for that boss. (The Share window says
+  "and 1 removal(s) of pins you sent before".) Placing a new pin for the boss instead just replaces it.
+- **Redundancy decides what is trusted.** For each boss the tool finds the largest group of players whose pins are within
+  `--spread` (0.10 of the map) of each other. If that group is a majority its median is the answer and far-off pins are
+  ignored; if nobody agrees the boss is left out as a CONFLICT. So a wrong pin from one player is outvoted once two others
+  agree, and a pin only one player has placed is used but listed as "only one player so far".
+- **Publishing only what is confirmed.** `--min-agree 2` leaves out bosses fewer than two players agree on. A good rule:
+  use the guild block (everything, with single-player pins) for the guild, and build the public release with
+  `--min-agree 2`.
+- **Judging a pin.** `--explain` lists each player's pin for each boss and how far it is from the result, so an outlier or
+  a player who is often far off stands out.
+- **Discarding.** `--ignore CODE` drops everything from one player; `--ignore "CODE|id|Boss name"` drops one of their
+  pins; `--ignore "*|id|Boss name"` drops every submission for a boss so it can be collected again. These are kept in
+  `tools/pins/ignore.txt` and applied every run (delete a line to undo it).
+
 ## Pin line format
 
 `NFDM|<instance id>|<dungeon name>|<boss name>|<floor number>|<x 0..1 across>|<y 0..1 down>|<contributor code>`
