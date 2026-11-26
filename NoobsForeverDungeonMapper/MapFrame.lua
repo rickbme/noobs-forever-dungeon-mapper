@@ -178,7 +178,9 @@ local function Create()
     f.tiles = {}
     for row = 0, 2 do
         for col = 0, 3 do
-            local t = f.canvas:CreateTexture(nil, "BACKGROUND")
+            -- ARTWORK, below the route lines: the canvas's dark backdrop is in BACKGROUND, and textures in the same
+            -- layer have no promised order, so tiles in BACKGROUND could end up under it (shaded blocks)
+            local t = f.canvas:CreateTexture(nil, "ARTWORK", nil, -2)
             t:SetSize(TILE, TILE)
             t:SetPoint("TOPLEFT", col * TILE, -row * TILE)
             f.tiles[#f.tiles + 1] = t
@@ -372,7 +374,7 @@ local function DrawRoute(d)
             n = n + 1
             local line = routeLines[n]
             if not line then
-                line = f.canvas:CreateLine(nil, "ARTWORK")
+                line = f.canvas:CreateLine(nil, "ARTWORK", nil, 1)  -- above the tiles (sublevel -2)
                 line:SetThickness(3)
                 routeLines[n] = line
             end

@@ -205,3 +205,13 @@ Feedback from guild testers, and what was done:
 - Added to `/fd probe`: game language and build, and whether the client finds each tile of the floor on screen
   (`C_Texture.GetTextureInfo`). Next: get vee's probe output and language; if tiles are "not found" the fix is OpenMap's
   (copy the tiles into the addon, `Media/Textures/MapTile`, as in its `Data/Forever/Tiles.lua`).
+
+## Status 2026-11-25 (shaded map blocks: cause found)
+
+- Screenshots from two players (Deadmines, Gnomeregan) show whole 256 px tiles drawn darker, in blocks, while the
+  rest are normal; one Gnomeregan block was fully opaque art, so not the torn-paper transparency. Cause (likely): the
+  canvas's dark backdrop (`SetBackdrop`, 60% black) and the 12 tile textures were all in the BACKGROUND layer at the
+  same sublevel, and WoW gives no draw order between textures in the same layer and sublevel, so some tiles could be
+  drawn before the backdrop and get dimmed by it. Fix: tiles are now ARTWORK sublevel -2 and the route lines ARTWORK
+  sublevel 1, so the order is explicit (dungeon and world map). Replaces the earlier re-request guess (reverted).
+- Unverified in game; the fix should make the block pattern disappear on every open and every dungeon.

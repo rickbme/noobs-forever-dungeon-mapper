@@ -55,8 +55,8 @@ widgetMeta = {
             GetWidth = function() return 140 end,
             GetCenter = function() return 100, 100 end,
             GetEffectiveScale = function() return 1 end,
-            CreateTexture = function() return NewWidget() end,
-            CreateLine = function() return NewWidget() end,
+            CreateTexture = function(_, _, layer, _, sub) local w = NewWidget(); w.layer, w.subLevel = layer, sub return w end,
+            CreateLine = function(_, _, layer, _, sub) local w = NewWidget(); w.layer, w.subLevel = layer, sub return w end,
             SetAtlas = function(s, a) s.atlas = a end,
             CreateFontString = function() return NewWidget() end,
             CreateMaskTexture = function() return NewWidget() end,
@@ -684,6 +684,30 @@ check(table.concat(printed, "\n"):find("all 12 tiles", 1, true), "the probe says
 C_Texture = nil
 ns.HideMap()
 ns.db.probe = nil
+
+realPrint("Map tiles are drawn above the canvas backdrop and below the route lines")
+ns.db.route = true
+ns.ShowDungeon(48, 1)
+local dm = NoobsForeverDungeonMapperFrame
+local tilesOK = #dm.tiles == 12
+for _, t in ipairs(dm.tiles) do
+    if not (rawget(t, "layer") == "ARTWORK" and rawget(t, "subLevel") == -2) then tilesOK = false end
+end
+check(tilesOK, "all 12 dungeon tiles are ARTWORK, sublevel -2 (not in the backdrop's BACKGROUND layer)")
+local linesOK, nlines = true, 0
+for _, l in ipairs(dm.routeLines) do
+    nlines = nlines + 1
+    if not (rawget(l, "layer") == "ARTWORK" and rawget(l, "subLevel") == 1) then linesOK = false end
+end
+check(nlines > 0 and linesOK, "route lines are ARTWORK sublevel 1, above the tiles")
+ns.HideMap()
+ns.ShowWorldMap(1415)
+local wtilesOK = #NoobsForeverDungeonMapperWorld.tiles == 12
+for _, t in ipairs(NoobsForeverDungeonMapperWorld.tiles) do
+    if not (rawget(t, "layer") == "ARTWORK" and rawget(t, "subLevel") == -2) then wtilesOK = false end
+end
+check(wtilesOK, "the world map's tiles are layered the same way")
+ns.HideWorldMap()
 
 realPrint("Boss pins from OpenMap and the placer")
 local pinned = 0

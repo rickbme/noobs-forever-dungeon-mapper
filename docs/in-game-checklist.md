@@ -63,6 +63,9 @@ Go into any dungeon (The Hall of Thanes is best, then Ragefire Chasm or Deadmine
       colours:** open that map and type `/fd probe`. It prints your game language and build and says whether
       all the map tiles were found. Screenshot the chat lines, plus the map itself, and tell us which dungeon and
       floor, and whether you use other map or UI addons.
+- [ ] **Even picture:** open several dungeons (Gnomeregan, Deadmines, Scarlet Monastery...), several times each, and
+      on every floor. The whole map picture should look the same brightness: no square block darker than the rest.
+      If one still shows, screenshot it and tell us the dungeon and floor.
 - [ ] For a new dungeon: the map is Santiago Reyes' drawing, with **"Map by Santiago Reyes"** at the bottom
       right and his watermark still visible.
 - [ ] In **The Hall of Thanes**: walking into a new area moves a blue ring on the map ("you are here").

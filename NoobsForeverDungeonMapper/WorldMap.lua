@@ -199,7 +199,7 @@ local function Create()
     f.tiles = {}
     for row = 0, 2 do
         for col = 0, 3 do
-            local t = f.canvas:CreateTexture(nil, "BACKGROUND")
+            local t = f.canvas:CreateTexture(nil, "ARTWORK", nil, -2) -- (the same layering as the dungeon map)
             t:SetSize(TILE, TILE)
             t:SetPoint("TOPLEFT", col * TILE, -row * TILE)
             f.tiles[#f.tiles + 1] = t
