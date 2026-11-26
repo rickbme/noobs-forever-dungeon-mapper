@@ -351,6 +351,71 @@ while ns.CanUndoBossPlace() do ns.UndoBossPlace() end
 ns.db.bossPlaces = {}
 ns.HideMap()
 
+realPrint("Guild pins: export, import, layering")
+local stockade = ns.Dungeons[34]
+local targorr, hamhock = stockade.bosses[1], stockade.bosses[3]
+ns.db.guildPins = {}
+for _, b in ipairs(stockade.bosses) do b.floor, b.x, b.y, b.fromGuild, b.original = nil, nil, nil, nil, nil end
+ns.db.bossPlaces = {}
+ns.db.placer = true
+ns.ShowDungeon(34, 1)
+ns.StartPlacing(1)
+ns.PlaceAt(0.2, 0.3)
+local exported = ns.ExportBossPlaces()
+check(#exported == 1 and exported[1] == "NFDM|34|Stormwind Stockade|Targorr the Dread|1|0.2000|0.3000", "an exported pin line starts with the NFDM marker")
+ns.ClearBossPlace(34, targorr)
+while ns.CanUndoBossPlace() do ns.UndoBossPlace() end
+ns.db.bossPlaces = {}
+check(targorr.x == nil, "(the pin is gone again before the import)")
+local pasted = table.concat({
+    "# Noobs Forever Dungeon Mapper boss pins",
+    "chatter that is not a pin line",
+    exported[1],
+    "> `NFDM|34|Stormwind Stockade|Hamhock|1|0.8000|0.4500`",
+    "NFDM|999|Nowhere|Some Boss|1|0.5|0.5",
+    "NFDM|34|Stormwind Stockade|Not A Boss|1|0.5|0.5",
+    "NFDM|34|Stormwind Stockade|Kam Deepfury|3|0.5|0.5",
+    "NFDM|34|Stormwind Stockade|Kam Deepfury|1|1.5|0.5",
+    "NFDM|34|Stormwind Stockade|Kam Deepfury|1",
+    "NFDM|36|Deadmines|Rhahk'Zor|1|0.9000|0.9000",
+}, "\n")
+local builtIn = ns.Dungeons[36].bosses[1]
+local keepX, keepY = builtIn.x, builtIn.y
+local n, skipped = ns.ImportGuildPins(pasted)
+check(n == 3, "three good lines were taken (got " .. n .. ")")
+check(#skipped == 5, "five bad pin lines were skipped with reasons (got " .. #skipped .. ")")
+check(targorr.x == 0.2 and targorr.fromGuild == true and hamhock.x == 0.8, "imported pins fill bosses that had none")
+check(builtIn.x == keepX and builtIn.y == keepY and not builtIn.fromGuild, "a boss that already has a built-in pin is left alone")
+check(ns.CountGuildPins() == 3, "the guild pins are counted")
+ns.ShowDungeon(34, 1)
+ns.StartPlacing(1)
+ns.PlaceAt(0.5, 0.5)
+check(targorr.x == 0.5 and not targorr.fromGuild, "your own pin wins over the guild's")
+ns.ClearBossPlace(34, targorr)
+check(targorr.x == 0.2 and targorr.fromGuild == true, "removing your pin shows the guild's again")
+-- a reload: forget what is on the bosses, apply what is saved
+for _, b in ipairs(stockade.bosses) do b.floor, b.x, b.y, b.fromGuild, b.original = nil, nil, nil, nil, nil end
+ns.ApplyBossPlaces()
+check(targorr.x == 0.2 and hamhock.x == 0.8, "guild pins come back after a reload")
+ns.StartPlacing(1)
+ns.PlaceAt(0.55, 0.45)
+for _, b in ipairs(stockade.bosses) do b.floor, b.x, b.y, b.fromGuild, b.original = nil, nil, nil, nil, nil end
+ns.ApplyBossPlaces()
+check(targorr.x == 0.55 and hamhock.x == 0.8, "and your own pin is put over the guild's after a reload")
+ns.ClearGuildPins()
+check(hamhock.x == nil and ns.CountGuildPins() == 0, "removing the imported pins takes the guild's pins away")
+check(targorr.x == 0.55 and ns.HasBossPlace(34, targorr), "but keeps your own")
+ns.ClearBossPlace(34, targorr)
+check(targorr.x == nil, "and nothing is left under your pin once the guild's are gone")
+local second = ns.ImportGuildPins("NFDM|34|Stormwind Stockade|Hamhock|1|0.7000|0.4000")
+local second2 = ns.ImportGuildPins("NFDM|34|Stormwind Stockade|Hamhock|1|0.7500|0.4200")
+check(hamhock.x == 0.75 and hamhock.y == 0.42, "importing again updates a guild pin")
+ns.ClearGuildPins()
+ns.db.placer = false
+ns.HideMap()
+while ns.CanUndoBossPlace() do ns.UndoBossPlace() end
+ns.db.bossPlaces = {}
+
 realPrint("The mouse wheel zooms the world map")
 ns.ShowWorldMap(947)
 local zw = NoobsForeverDungeonMapperWorld

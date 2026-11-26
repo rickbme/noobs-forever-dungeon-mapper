@@ -273,6 +273,11 @@ local function BuildOptions(parent)
     share:SetScript("OnClick", function() ns.ShowShareWindow() end)
     Tip(share, "Shows the pins you placed as text you can copy and send to the mapmakers.")
     y = y - 28
+    local import = Button(parent, "Import guild pins", COL_W - 6)
+    import:SetPoint("TOPLEFT", R, y)
+    import:SetScript("OnClick", function() ns.ShowImportWindow() end)
+    Tip(import, "Paste the guild's shared boss pins (from Discord) to see them on your maps.")
+    y = y - 28
     local probe = Button(parent, "Check what the game tells addons", COL_W - 6)
     probe:SetPoint("TOPLEFT", R, y)
     probe:SetScript("OnClick", function() ns.Probe("") end)
@@ -293,7 +298,7 @@ end
 
 local function CreateOptions()
     opt = CreateFrame("Frame", "NoobsForeverDungeonMapperOptions", UIParent, "BackdropTemplate")
-    opt:SetSize(2 * COL_W + 78, 540)
+    opt:SetSize(2 * COL_W + 78, 572)
     opt:SetPoint("CENTER")
     opt:SetFrameStrata("DIALOG")
     opt:SetToplevel(true)

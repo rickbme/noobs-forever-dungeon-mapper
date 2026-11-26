@@ -430,7 +430,8 @@ function ns.ShowBossTooltip(owner, boss, index)
         GameTooltip:AddLine("Next boss", 1, 0.82, 0)
     end
     local d = ns.Dungeons[id]
-    if ns.HasBossPlace(id, boss) then GameTooltip:AddLine("Placed by you", 0.3, 0.85, 1) end
+    if ns.HasBossPlace(id, boss) then GameTooltip:AddLine("Placed by you", 0.3, 0.85, 1)
+    elseif boss.fromGuild then GameTooltip:AddLine("From the guild's shared pins", 0.75, 0.55, 1) end
     for _, q in ipairs(view.bossQuests and view.bossQuests[index] or {}) do
         GameTooltip:AddLine("Quest: " .. q.title, 1, 0.82, 0)
     end
@@ -488,7 +489,9 @@ local function DrawPins(d)
                 or (b == nextBoss and COLORS.nextUp) or COLORS.normal
             p.dot:SetVertexColor(c[1], c[2], c[3])
             p.num:SetText(killed and "" or i)
-            if ns.HasBossPlace(view.instanceID, b) then p.border:SetVertexColor(0.2, 0.8, 1, 0.85) else p.border:SetVertexColor(0, 0, 0, 0.45) end
+            if ns.HasBossPlace(view.instanceID, b) then p.border:SetVertexColor(0.2, 0.8, 1, 0.85)
+            elseif b.fromGuild then p.border:SetVertexColor(0.75, 0.55, 1, 0.85)
+            else p.border:SetVertexColor(0, 0, 0, 0.45) end
             p.check:SetShown(killed)
             p.quest:SetShown(view.bossQuests and view.bossQuests[i] ~= nil and not killed)
             p.glow:SetShown(b == nextBoss or fighting == b)

@@ -252,3 +252,12 @@ Feedback from guild testers, and what was done:
   player's position (`/fd probe` will confirm), and a sub-zone gives only an area (only the Hall of Thanes has anchors).
   If the probe shows `UnitPosition` works in a dungeon, a precise auto-pin becomes possible (world position -> floor
   needs each floor's UiMapAssignment bounds; not in our data yet).
+
+## Status 2026-11-25 (collecting boss pins from the guild)
+
+- Pipeline (docs/boss-pins.md): players Share -> paste `NFDM|...` lines in a guild-only Discord data channel ->
+  the maintainer runs `tools/ingest_pins.py` (validates, takes the agreeing majority's median, flags conflicts, writes
+  `Data/BossPlaces.lua` from `tools/pins/submissions.txt`) -> `--block` gives a block to pin in the channel that members
+  paste into Options > Import guild pins (guild-only layer: fills gaps, own pins win, removable) -> later, public release.
+- In the addon: exported lines now start with `NFDM|`; `Import guild pins` window; guild pins are stored in
+  `guildPins`, shown with a purple ring.

@@ -117,6 +117,8 @@ remakes with different layouts, so we place them by hand instead.
 
 ### Help map the bosses
 
+How the pins players place get collected and shared is in [docs/boss-pins.md](docs/boss-pins.md).
+
 When you enter a dungeon whose bosses have no pin yet, a small card asks if you'd like to help (once per dungeon
 per session; it has a *Don't ask me again* box, and the same switch is in Options). After you defeat a boss that has
 no pin, another offers to mark where you fought it. Say yes and just click the map. Or turn it on yourself:

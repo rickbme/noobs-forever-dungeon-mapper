@@ -27,6 +27,7 @@ ns.DEFAULTS = {
     worldFirst = true,    -- outside a dungeon, the map button opens the world map where you are
     askToMap = true,      -- ask to turn on mapmaker mode when entering a dungeon with unpinned bosses
     placer = false,       -- mapmaker mode: click a boss, then the map, to place its pin
+    guildPins = {},       -- [instanceID] = { [boss name] = { floor, x, y } } pasted in from the guild's shared pins
     bossPlaces = {},      -- [instanceID] = { [boss name] = { floor, x, y } } placed by this player
     welcomed = false,     -- the first-run popup has been shown
     seen = {},            -- [instanceID] = { [sub-zone name] = times entered }, for writing anchors
