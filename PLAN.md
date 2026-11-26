@@ -205,14 +205,3 @@ Feedback from guild testers, and what was done:
 - Added to `/fd probe`: game language and build, and whether the client finds each tile of the floor on screen
   (`C_Texture.GetTextureInfo`). Next: get vee's probe output and language; if tiles are "not found" the fix is OpenMap's
   (copy the tiles into the addon, `Media/Textures/MapTile`, as in its `Data/Forever/Tiles.lua`).
-
-## Status 2026-11-25 (shaded block on first open)
-
-- Report: opening a dungeon from the world map (Gnomeregan) shows a shaded block in the top right at first. Checked
-  from the game files: all 636 tiles exist, and the top-right tile (4) and the right column and bottom row (tiles 4, 8,
-  9-12) have transparent torn-paper corners and edges (8.6%-44% of their pixels), which show the dark backdrop. A block
-  that appears only on first open points at a tile that hadn't finished loading.
-- Mitigation (speculative, harmless if wrong): both map windows now re-request their tiles (clear then set) 0.4, 1.5 and
-  4 seconds after opening (`ns.ReapplyTilesLater`). Next, with a screenshot and `/fd probe` output from the player: if the
-  block stays, copy the tiles into the addon (OpenMap's `Media/Textures/MapTile`), as the transparent edges and the
-  language-dependent files would then no longer matter.

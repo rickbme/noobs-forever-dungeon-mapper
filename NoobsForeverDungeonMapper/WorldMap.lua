@@ -356,14 +356,6 @@ function ns.ShowWorldMap(uiMapID)
     f:Show()
     ns.SnapOpacity()
     Draw()
-    -- ask for the map's tiles again shortly after, in case one hadn't loaded yet
-    local shown = data
-    ns.ReapplyTilesLater(function() return f:IsShown() and current == shown end, function()
-        for i, t in ipairs(f.tiles) do
-            t:SetTexture(nil)
-            t:SetTexture(shown.tiles[i])
-        end
-    end)
 end
 
 -- The continent of the world map's `sub` list the point (x, y) (0..1) is over, else the nearest one.
